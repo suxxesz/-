@@ -1,0 +1,81 @@
+/*
+ * Дизайн-токены DniesterCity в стиле DniesterWorks.
+ * Светлая бело-синяя тема — по умолчанию; тёмная задаёт те же токены, поэтому
+ * ни один компонент не держит своих цветов и не получает «белое на белом».
+ */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f3f6fb;
+  --surface: #ffffff;
+  --surface-2: #eef3fb;
+  --surface-3: #e3ebf7;
+  --line: #dbe4f1;
+  --line-strong: #c4d2e6;
+  --ink: #0f1f38;
+  --muted: #4d5f7b;
+  --subtle: #7486a1;
+  --on-accent: #ffffff;
+
+  --primary: #1f5fd6;
+  --primary-hover: #2f6fe6;
+  --primary-strong: #123f99;
+  --primary-soft: #e6eefd;
+  --accent-ink: #1a54c2;
+
+  --ok: #1f9d6b;
+  --warn: #c7811b;
+  --danger: #d24b3c;
+
+  --glow-1: rgb(31 95 214 / 0.14);
+  --glow-2: rgb(56 189 248 / 0.1);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 18px 40px -28px rgb(18 50 110 / 0.35);
+  --shadow-pop: 0 24px 60px -20px rgb(18 50 110 / 0.35);
+  --scrim: rgb(9 20 40 / 0.45);
+
+  --text-secondary: var(--muted);
+  --text-tertiary: var(--subtle);
+  --radius: 16px;
+  --radius-card: 22px;
+  --radius-pill: 999px;
+  --font-sans: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Montserrat', 'Inter', system-ui, sans-serif;
+
+  /* Старые имена из первой версии — указывают на новые токены. */
+  --green: var(--primary);
+  --green-dark: var(--primary-strong);
+  --accent: var(--primary-soft);
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #070e1b;
+  --surface: #0d1829;
+  --surface-2: #111f35;
+  --surface-3: #172a45;
+  --line: #1e3150;
+  --line-strong: #2a4269;
+  --ink: #e8f0fb;
+  --muted: #a3b4cc;
+  --subtle: #7d90ac;
+  --on-accent: #ffffff;
+
+  --primary: #3f7df0;
+  --primary-hover: #5a90f5;
+  --primary-strong: #2a62cc;
+  --primary-soft: #15284a;
+  --accent-ink: #8fb6ff;
+
+  --ok: #4cc795;
+  --warn: #e8a647;
+  --danger: #f07a6a;
+
+  --glow-1: rgb(63 125 240 / 0.22);
+  --glow-2: rgb(56 189 248 / 0.08);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.035) inset, 0 18px 40px -24px rgb(0 0 0 / 0.65);
+  --shadow-pop: 0 28px 70px -20px rgb(0 0 0 / 0.7);
+  --scrim: rgb(0 0 0 / 0.6);
+}
+:root[data-accent='indigo'] { --primary: #4f46e5; --primary-hover: #6158f0; --primary-strong: #3730a3; --accent-ink: #4338ca; }
+:root[data-accent='sky'] { --primary: #0284c7; --primary-hover: #0b97dd; --primary-strong: #075985; --accent-ink: #0369a1; }
+:root[data-theme='dark'][data-accent='indigo'] { --primary: #6d65f2; --primary-strong: #4f46e5; --accent-ink: #b1abff; --primary-soft: #1e1d4a; }
+:root[data-theme='dark'][data-accent='sky'] { --primary: #1ea2e6; --primary-strong: #0284c7; --accent-ink: #8fd3fb; --primary-soft: #0f2a3d; }

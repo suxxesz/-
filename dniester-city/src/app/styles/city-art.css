@@ -17,7 +17,7 @@
 .cloud {
   position: absolute;
   border-radius: 50%;
-  background: #f2f4ea;
+  background: color-mix(in srgb, #a2b946 8%, var(--surface));
   width: 75px;
   height: 16px;
   top: 63px;
@@ -73,7 +73,7 @@
 }
 .building i {
   display: block;
-  background: #d4dfc8;
+  background: color-mix(in srgb, #82b946 20%, var(--surface));
   height: 15px;
   box-shadow: inset 3px 0 #abc2a1;
 }
@@ -171,16 +171,16 @@
   position: absolute;
   bottom: 17px;
   right: 45px;
-  background: #ffffffed;
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
   box-shadow: 0 5px 20px #3b573519;
-  border: 1px solid #fff;
+  border: 1px solid var(--surface);
   border-radius: 7px;
   padding: 11px 14px;
   display: flex;
   align-items: center;
   gap: 9px;
   z-index: 3;
-  color: #557c58;
+  color: var(--muted);
   font-size: 9px;
   font-weight: 750;
   transform: rotate(-3deg);
@@ -189,6 +189,6 @@
   display: block;
   font-size: 7px;
   font-weight: 500;
-  color: #9aa58e;
+  color: var(--subtle);
   margin-top: 4px;
 }
