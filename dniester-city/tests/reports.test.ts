@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyAction } from '../src/actions';
-import { emptyState } from '../src/model';
+import { applyAction } from '../src/entities/city/model/actions';
+import { emptyState } from '../src/entities/city/model/types';
 const A = 'Тирасполь, ул. Ленина, 18';
 test('жалоба: последовательные статусы и обязательный фотоотчёт', () => {
   let s = applyAction(emptyState(), { type: 'report.create', payload: { type: 'Дороги', title: 'Яма', description: 'Глубокая', address: A, lat: 46.84, lng: 29.63, media: 'data:image/png;base64,AA', mediaKind: 'image' } });

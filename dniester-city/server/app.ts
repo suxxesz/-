@@ -1,14 +1,14 @@
 import express from 'express';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { categories } from '../src/model';
+import { categories } from '../src/entities/city/model/types';
 import { fileName, uploadDir } from './files';
 import { resolve } from 'node:path';
 import type { Pool, PoolClient } from 'pg';
 import { verifyTelegram, readSession, signSession } from './auth';
 import { emptyPrefs, stateFor, mutate, type User } from './store';
-import { parseAction } from '../src/contracts';
-import { applyAction } from '../src/actions';
+import { parseAction } from '../src/entities/city/model/contracts';
+import { applyAction } from '../src/entities/city/model/actions';
 export type AppOptions = {
   pool: Pick<Pool, 'query' | 'connect'>;
   sessionSecret: string;

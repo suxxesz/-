@@ -4,7 +4,7 @@ import { createHmac, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import { createApp, type AppOptions } from '../server/app';
-import { demoAddress } from '../src/demo';
+import { demoAddress } from '../src/entities/city/model/demo';
 const bot = 'integration-test-token';
 function signedUser(id: number) {
   const p = new URLSearchParams({

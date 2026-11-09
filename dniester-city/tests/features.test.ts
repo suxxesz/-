@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createDemoState as initialState, demoAddress } from '../src/demo';
-import { applyAction } from '../src/actions';
-import { parseAction } from '../src/contracts';
-import { eventTime, wallTime } from '../src/lib/dates';
+import { createDemoState as initialState, demoAddress } from '../src/entities/city/model/demo';
+import { applyAction } from '../src/entities/city/model/actions';
+import { parseAction } from '../src/entities/city/model/contracts';
+import { eventTime, wallTime } from '../src/shared/lib/dates';
 test('meters of one service retain separate baselines and monthly histories', () => {
   let s = initialState();
   s = applyAction(s, {
@@ -199,5 +199,7 @@ test('wall time is stored as UTC using the Chisinau seasonal offset', () => {
   assert.equal(eventTime('2026-10-28T09:00'), '2026-10-28T07:00:00.000Z');
   assert.equal(eventTime('2026-07-28T09:00'), '2026-07-28T06:00:00.000Z');
   assert.equal(wallTime('2026-10-28T07:00:00Z'), '2026-10-28T09:00');
-  assert.throws(() => eventTime('2026-03-29T03:30'), /не существует/);
+  // В Молдове весной часы переводят с 02:00 на 03:00 — не существует именно 02:xx.
+  assert.throws(() => eventTime('2026-03-29T02:30'), /не существует/);
+  assert.equal(eventTime('2026-03-29T03:30'), '2026-03-29T00:30:00.000Z');
 });

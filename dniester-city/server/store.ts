@@ -7,9 +7,9 @@ import {
   type Role,
   type CityEvent,
   services,
-} from '../src/model';
-import { applyAction } from '../src/actions';
-import { parseAction, type Action } from '../src/contracts';
+} from '../src/entities/city/model/types';
+import { applyAction } from '../src/entities/city/model/actions';
+import { parseAction, type Action } from '../src/entities/city/model/contracts';
 export type User = {
   id: string;
   telegram_id: string;
@@ -23,7 +23,7 @@ export type User = {
     subscriptionsByAddress?: Record<string, Category[]>;
   };
 };
-export type { Organization } from '../src/model';
+export type { Organization } from '../src/entities/city/model/types';
 type RecordRow = {
   id: string;
   kind: string;

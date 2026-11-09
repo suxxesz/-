@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { pool } from './db';
-import { services } from '../src/model';
+import { services } from '../src/entities/city/model/types';
 // Local operator CLI. It is deliberately not exposed as a public API.
 const path = process.argv[2];
 if (!path) throw Error('Использование: npm run provision -- configuration.json');

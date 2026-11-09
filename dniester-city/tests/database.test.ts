@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
 import type { PoolClient } from 'pg';
 import { stateFor, mutate, emptyPrefs, type User } from '../server/store';
-import { demoAddress } from '../src/demo';
+import { demoAddress } from '../src/entities/city/model/demo';
 test('PostgreSQL schema, organization isolation, personal readings and addressed outbox', async () => {
   const pg = new PGlite();
   try {

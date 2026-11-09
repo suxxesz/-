@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { applyAction } from '../src/actions';
-import { validateReading } from '../src/model';
-import { createDemoState as initialState, demoAddress } from '../src/demo';
+import { applyAction } from '../src/entities/city/model/actions';
+import { validateReading } from '../src/entities/city/model/types';
+import { createDemoState as initialState, demoAddress } from '../src/entities/city/model/demo';
 import { verifyTelegram, signSession, readSession } from '../server/auth';
 import { canManage, type User, type Organization } from '../server/store';
 test('meter input rejects duplicates, decreases, non-meter services and old periods', () => {
