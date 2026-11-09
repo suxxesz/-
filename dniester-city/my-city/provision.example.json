@@ -1,0 +1,23 @@
+{
+  "organizations": [
+    {
+      "id": "water-pilot",
+      "name": "Название пилотной организации",
+      "categories": ["water", "sewer"],
+      "addresses": ["Тирасполь, ул. Ленина, 18"],
+      "connected": false
+    }
+  ],
+  "dispatchers": [],
+  "schedules": [
+    {
+      "id": "schedule-pilot",
+      "organizationId": "water-pilot",
+      "address": "Тирасполь, ул. Ленина, 18",
+      "category": "water",
+      "title": "Учебный профилактический осмотр",
+      "when": "По согласованному графику",
+      "description": "Заменить данными, подтверждёнными организацией."
+    }
+  ]
+}
