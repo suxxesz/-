@@ -6,6 +6,7 @@ import { PageHeading, SectionHeading, InfoStrip, Empty, Pill } from '@/shared/ui
 import { ServiceIcon } from '@/entities/city/ui';
 import { exportReadings } from '@/features/export-readings';
 import { monthText } from '@/shared/lib/dates';
+import { Select } from '@/shared/ui/Select';
 export default function Readings() {
   const { state, open } = useCity(),
     [selected, setSelected] = useState('');
@@ -92,7 +93,7 @@ export default function Readings() {
                 Сравнение по сохранённым показаниям · {serviceById(meter.category).unit}
               </p>
             </div>
-            <select
+            <Select
               aria-label="Счётчик для графика"
               value={meter.id}
               onChange={(e) => setSelected(e.target.value)}
@@ -102,7 +103,7 @@ export default function Readings() {
                   {m.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           {series.length ? (
             <>

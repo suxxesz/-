@@ -51,8 +51,8 @@ button.secondary, .chip { background: var(--surface); color: var(--ink); border:
 .sidebar nav button[aria-current='page'], .sidebar nav button.active { background: var(--primary-soft); color: var(--accent-ink); }
 .pill.neutral { background: var(--surface-3); color: var(--muted); }
 .pill.blue { background: var(--primary-soft); color: var(--accent-ink); }
-.pill.success { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: var(--ok); }
-.pill.warning { background: color-mix(in srgb, var(--warn) 18%, var(--surface)); color: var(--warn); }
+.pill.success { background: color-mix(in srgb, var(--ok) 11%, var(--surface)); color: var(--ok); }
+.pill.warning { background: color-mix(in srgb, var(--warn) 11%, var(--surface)); color: var(--warn); }
 .modal, dialog, .sheet { background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow-pop); }
 .scrim, .modal-backdrop, .sidebar-scrim { background: var(--scrim); }
 .leaflet-container { border-radius: var(--radius-card); background: var(--surface-2); }
@@ -67,3 +67,33 @@ button.secondary, .chip { background: var(--surface); color: var(--ink); border:
 .info-strip { background: var(--primary-soft); color: var(--ink); border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--line)); border-radius: 18px; }
 .info-strip svg { color: var(--accent-ink); }
 .info-strip p, .info-strip div { color: var(--ink); opacity: .85; }
+/* Свой выпадающий список (shared/ui/Select) */
+.dc-select { position: relative; min-width: 0; }
+.dc-select-trigger {
+  width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 14px; text-align: left; font-weight: 500; transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.dc-select-trigger:hover { border-color: var(--line-strong); }
+.dc-select[data-open] .dc-select-trigger, .dc-select-trigger:focus-visible {
+  outline: none; border-color: var(--primary); background: var(--surface);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.dc-select-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-select-chev { display: inline-grid; color: var(--subtle); }
+.dc-select-menu {
+  position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 6px); min-width: 180px;
+  max-height: 280px; overflow-y: auto; margin: 0; padding: 6px; list-style: none;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: var(--shadow-pop); transform-origin: top center; overscroll-behavior: contain;
+}
+.dc-select-menu[data-up] { top: auto; bottom: calc(100% + 6px); transform-origin: bottom center; }
+.dc-select-menu li {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 12px; border-radius: 11px; cursor: pointer; font-size: 13.5px;
+}
+.dc-select-menu li[data-active] { background: var(--surface-2); }
+.dc-select-menu li[aria-selected='true'] { color: var(--accent-ink); font-weight: 600; }
+.dc-select-menu li[aria-disabled] { opacity: .45; cursor: not-allowed; }
+.dc-select-menu li svg { color: var(--primary); }
+.ticket-preview small { color: var(--muted); }

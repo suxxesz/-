@@ -4,6 +4,7 @@ import { services } from '@/entities/city/model/types';
 import { useCity } from '@/entities/city/model/store';
 import { PageHeading, Empty } from '@/shared/ui/ui';
 import { EventCard, ServiceIcon } from '@/entities/city/ui';
+import { Select } from '@/shared/ui/Select';
 const MapView = lazy(() => import('@/widgets/map/ui/MapView'));
 export default function Events() {
   const { state, open } = useCity(),
@@ -56,7 +57,7 @@ export default function Events() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <select
+        <Select
           aria-label="Фильтр по услуге"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -67,7 +68,7 @@ export default function Events() {
               {s.name}
             </option>
           ))}
-        </select>
+        </Select>
         <button className="outline" onClick={() => setMap(!map)}>
           {map ? <List size={17} /> : <MapIcon size={17} />} {map ? 'Списком' : 'На карте'}
         </button>

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { choose } from './select';
 import AxeBuilder from '@axe-core/playwright';
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -9,15 +10,15 @@ test('separate meter can submit in a period already used by another meter', asyn
   await page.getByRole('button', { name: 'Показания счётчиков', exact: true }).click();
   await page.getByRole('button', { name: 'Добавить счётчик', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.locator('[name=category]').selectOption('water');
+  await choose(dialog, { name: 'category' }, 'water');
   await dialog.locator('[name=name]').fill('Ванная');
   await dialog.locator('[name=serial]').fill('V-123');
   await dialog.locator('[name=initialValue]').fill('500');
   await dialog.getByRole('button', { name: 'Подтвердить и сохранить' }).click();
   await expect(page.getByRole('heading', { name: 'Ванная', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Передать показания', exact: true }).click();
-  await dialog.locator('[name=category]').selectOption('water');
-  await dialog.locator('[name=meterId]').selectOption({ label: 'Ванная · № V-123' });
+  await choose(dialog, { name: 'category' }, 'water');
+  await choose(dialog, { name: 'meterId' }, { label: 'Ванная · № V-123' });
   await dialog.locator('[name=period]').fill('2026-09');
   await dialog.locator('[name=value]').fill('505');
   await dialog.getByRole('button', { name: 'Подтвердить и сохранить' }).click();
@@ -40,9 +41,7 @@ test('draft review, multiple houses and controlled publication', async ({ page }
   await dialog.getByLabel('Я проверил источник, адреса и время').check();
   await dialog.getByRole('button', { name: 'Опубликовать для жителей' }).click();
   await expect(row).toContainText('Запланировано');
-  await page
-    .getByRole('combobox', { name: 'Выбрать адрес' })
-    .selectOption('Бендеры, ул. Советская, 12');
+  await choose(page, { label: 'Выбрать адрес' }, 'Бендеры, ул. Советская, 12');
   await expect(
     page.locator('.admin-event').filter({ hasText: 'Проверка двух домов' }),
   ).toBeVisible();
@@ -67,7 +66,7 @@ test('dispatcher edits service schedule and organization zone', async ({ page })
   await page.getByRole('button', { name: 'Графики', exact: true }).click();
   await page.getByRole('button', { name: 'Добавить график' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.locator('[name=category]').selectOption('waste');
+  await choose(dialog, { name: 'category' }, 'waste');
   await dialog.locator('[name=title]').fill('Утренний вывоз');
   await dialog.locator('[name=when]').fill('Понедельник · 08:00');
   await dialog.locator('[name=description]').fill('По учебному графику');

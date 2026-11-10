@@ -5,6 +5,7 @@ import { useCity } from '@/entities/city/model/store';
 import { services } from '@/entities/city/model/types';
 import { PageHeading, SectionHeading } from '@/shared/ui/ui';
 import { serverMode } from '@/entities/city/api/client';
+import { Select } from '@/shared/ui/Select';
 export default function Settings() {
   const { state, act, open, busy } = useCity(),
     [large, setLarge] = useState(localStorage.getItem('city-large-text') === '1');
@@ -40,15 +41,15 @@ export default function Settings() {
           <h2>Оформление</h2>
           <label>
             Тема
-            <select aria-label="Тема" defaultValue={currentTheme()[0]} onChange={(e) => applyTheme(e.target.value, currentTheme()[1])}>
+            <Select aria-label="Тема" defaultValue={currentTheme()[0]} onChange={(e) => applyTheme(e.target.value, currentTheme()[1])}>
               {themes.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
-            </select>
+            </Select>
           </label>
           <label>
             Акцентный цвет
-            <select aria-label="Акцентный цвет" defaultValue={currentTheme()[1]} onChange={(e) => applyTheme(currentTheme()[0], e.target.value)}>
+            <Select aria-label="Акцентный цвет" defaultValue={currentTheme()[1]} onChange={(e) => applyTheme(currentTheme()[0], e.target.value)}>
               {accents.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
-            </select>
+            </Select>
           </label>
         </section>
         <section className="panel">

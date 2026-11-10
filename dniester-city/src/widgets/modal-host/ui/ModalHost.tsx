@@ -15,6 +15,7 @@ import { currentPeriod, wallTime } from '@/shared/lib/dates';
 import { serverMode, resetDemo, request } from '@/entities/city/api/client';
 import { Pill, InfoStrip, Empty } from '@/shared/ui/ui';
 import { ServiceIcon, StatusPill } from '@/entities/city/ui';
+import { Select } from '@/shared/ui/Select';
 function sourceLink(url?: string) {
   return url?.startsWith('https://') ? (
     <a className="text-link" href={url} target="_blank" rel="noopener noreferrer">
@@ -416,7 +417,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
   const selectCategory = (meterOnly = false) => (
     <label>
       Услуга
-      <select
+      <Select
         name="category"
         value={category}
         onChange={(e) => {
@@ -431,7 +432,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
               {s.name}
             </option>
           ))}
-      </select>
+      </Select>
     </label>
   );
   const text = (
@@ -696,7 +697,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
               <>
                 <label>
                   Счётчик
-                  <select
+                  <Select
                     name="meterId"
                     value={meter?.id || ''}
                     onChange={(e) => setMeterId(e.target.value)}
@@ -706,7 +707,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
                         {m.name} · № {m.serial}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </label>
                 <div className="previous-reading">
                   <GaugeValue
@@ -788,10 +789,10 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
             {area('description', 'Описание', '', 'Где возникла проблема и что произошло?')}
             <label>
               Приоритет
-              <select name="priority">
+              <Select name="priority">
                 <option>Обычная</option>
                 <option>Повышенная</option>
-              </select>
+              </Select>
             </label>
             {state.events.some(
               (e) =>
@@ -869,11 +870,11 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
             <h3 className="detail-title">{event!.title}</h3>
             <label>
               Статус
-              <select name="status" defaultValue={event!.status}>
+              <Select name="status" defaultValue={event!.status}>
                 {['Запланировано', 'Выполняется', 'Завершено', 'Отменено'].map((v) => (
                   <option key={v}>{v}</option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label>
               Ожидаемое окончание
@@ -890,7 +891,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
             <h3 className="detail-title">{ticket!.title}</h3>
             <label>
               Следующий статус
-              <select name="status">
+              <Select name="status">
                 <option>
                   {
                     (
@@ -903,7 +904,7 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
                     )[ticket!.status]
                   }
                 </option>
-              </select>
+              </Select>
             </label>
             {area('comment', 'Результат / комментарий')}
           </>

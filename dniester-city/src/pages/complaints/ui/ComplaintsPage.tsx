@@ -3,6 +3,7 @@ import { useCity } from '@/entities/city/model/store';
 import { PageHeading, InfoStrip, Empty, Pill } from '@/shared/ui/ui';
 import { reportTypes, reportStatuses, type Report } from '@/entities/city/model/types';
 import { dateText } from '@/shared/lib/dates';
+import { Select } from '@/shared/ui/Select';
 const ReportMap = lazy(() => import('@/widgets/map/ui/ReportMap'));
 const readFile = (f: File) =>
   new Promise<string>((ok, no) => {
@@ -62,9 +63,9 @@ export default function Complaints() {
       <PageHeading title="Книга жалоб" subtitle="ЖКХ, дороги и благоустройство: фото, точка на карте и открытый статус." />
       <InfoStrip>Обязательны фото или видео и точка на карте ПМР (или адрес). Это не вызов аварийной службы.</InfoStrip>
       <section className="panel" style={{ padding: 20, display: 'grid', gap: 12 }}>
-        <select aria-label="Категория" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+        <Select aria-label="Категория" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
           {reportTypes.map((t) => <option key={t}>{t}</option>)}
-        </select>
+        </Select>
         <input aria-label="Кратко" placeholder="Например: яма на ул. Ленина" value={title} onChange={(e) => setTitle(e.target.value)} />
         <textarea aria-label="Описание" placeholder="Что случилось?" value={description} onChange={(e) => setDescription(e.target.value)} />
         <input aria-label="Адрес" placeholder="Адрес (если не отмечаете точку)" value={address} onChange={(e) => setAddress(e.target.value)} />

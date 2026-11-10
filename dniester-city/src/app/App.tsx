@@ -31,6 +31,7 @@ import { useView, navigate, type View } from '@/shared/lib/navigation';
 import { serverMode, resetDemo } from '@/entities/city/api/client';
 import ModalHost from '@/widgets/modal-host/ui/ModalHost';
 import Dashboard from '@/pages/dashboard';
+import { Select } from '@/shared/ui/Select';
 const Events = lazy(() => import('@/pages/events')),
   Readings = lazy(() => import('@/pages/readings')),
   Complaints = lazy(() => import('@/pages/complaints')),
@@ -250,7 +251,7 @@ export default function App() {
             <div>
               <small>Мой адрес</small>
               {state.addresses.length ? (
-                <select
+                <Select
                   disabled={busy}
                   aria-label="Выбрать адрес"
                   value={state.activeAddress}
@@ -264,7 +265,7 @@ export default function App() {
                   {state.addresses.map((a) => (
                     <option key={a}>{a}</option>
                   ))}
-                </select>
+                </Select>
               ) : (
                 <button className="text-link" onClick={() => open({ type: 'address' })}>
                   Добавить адрес

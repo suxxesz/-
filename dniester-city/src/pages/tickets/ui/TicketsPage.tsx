@@ -4,6 +4,7 @@ import { useCity } from '@/entities/city/model/store';
 import { PageHeading, InfoStrip, Empty, Pill } from '@/shared/ui/ui';
 import { ServiceIcon, StatusPill } from '@/entities/city/ui';
 import { dateText } from '@/shared/lib/dates';
+import { Select } from '@/shared/ui/Select';
 export default function Tickets() {
   const { state, open } = useCity(),
     [filter, setFilter] = useState('all'),
@@ -43,7 +44,7 @@ export default function Tickets() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <select
+        <Select
           aria-label="Статус заявок"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -51,7 +52,7 @@ export default function Tickets() {
           <option value="all">Все заявки</option>
           <option value="active">Открытые</option>
           <option value="done">Выполненные</option>
-        </select>
+        </Select>
       </div>
       <div className="ticket-list">
         {tickets.map((t) => (

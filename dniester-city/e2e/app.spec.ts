@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { choose } from './select';
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
@@ -12,7 +13,7 @@ test('resident submits reading and ticket, dispatcher processes request, data pe
   await expect(page.getByRole('heading', { name: 'Ваш дом. Всё под контролем.' })).toBeVisible();
   await page.getByRole('button', { name: 'Передать показания Вода, свет и газ' }).click();
   let dialog = page.getByRole('dialog');
-  await dialog.locator('select[name=category]').selectOption('water');
+  await choose(dialog, { name: 'category' }, 'water');
   await dialog.locator('input[name=value]').fill('190');
   await dialog.getByRole('button', { name: 'Подтвердить и сохранить' }).click();
   await expect(dialog).toBeHidden();
@@ -20,7 +21,7 @@ test('resident submits reading and ticket, dispatcher processes request, data pe
   await expect(page.getByRole('cell', { name: '190', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Передать показания', exact: true }).click();
   dialog = page.getByRole('dialog');
-  await dialog.locator('select[name=category]').selectOption('water');
+  await choose(dialog, { name: 'category' }, 'water');
   await dialog.locator('input[name=value]').fill('191');
   await dialog.getByRole('button', { name: 'Подтвердить и сохранить' }).click();
   await expect(dialog.getByRole('alert')).toContainText('уже сохранены');
@@ -28,7 +29,7 @@ test('resident submits reading and ticket, dispatcher processes request, data pe
   await page.getByRole('button', { name: 'Мои заявки', exact: false }).first().click();
   await page.getByRole('button', { name: 'Новая заявка', exact: true }).click();
   dialog = page.getByRole('dialog');
-  await dialog.locator('select[name=category]').selectOption('waste');
+  await choose(dialog, { name: 'category' }, 'waste');
   await dialog.locator('input[name=title]').fill('Контейнеры переполнены');
   await dialog.locator('textarea[name=description]').fill('Мусор не вывезен со двора.');
   await dialog.getByRole('button', { name: 'Подтвердить и сохранить' }).click();
@@ -55,9 +56,7 @@ test('mobile layout, addresses and organization information', async ({ page }) =
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page.getByRole('button', { name: 'Организации', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Коммунальные организации' })).toBeVisible();
-  await page
-    .getByRole('combobox', { name: 'Выбрать адрес' })
-    .selectOption('Бендеры, ул. Советская, 12');
+  await choose(page, { label: 'Выбрать адрес' }, 'Бендеры, ул. Советская, 12');
   await page.getByRole('button', { name: 'Открыть меню' }).click();
   await page.getByRole('button', { name: 'Графики обслуживания', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Графики ещё не опубликованы' })).toBeVisible();
@@ -66,7 +65,7 @@ test('dispatcher publishes event and subscriber sees notification', async ({ pag
   await page.getByRole('button', { name: 'Панель диспетчера', exact: false }).click();
   await page.getByRole('button', { name: 'Создать событие' }).click();
   const dialog = page.getByRole('dialog');
-  await dialog.locator('[name=category]').selectOption('gas');
+  await choose(dialog, { name: 'category' }, 'gas');
   await dialog.locator('[name=title]').fill('Проверка газовой сети');
   await dialog.locator('[name=description]').fill('Учебная проверка');
   await dialog.locator('[name=start]').fill('2026-10-29T10:00');

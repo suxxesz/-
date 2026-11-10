@@ -12,6 +12,7 @@ import {
 import { Pill } from '../../../shared/ui/ui';
 import { type Category, type CityEvent, serviceById, dateText, timeText } from '../model/types';
 import { useCity } from '../model/store';
+import { Select } from '../../../shared/ui/Select';
 export const serviceIcons = {
   power: Zap,
   water: Droplets,
@@ -84,7 +85,7 @@ export function CategorySelect({
   name?: string;
 }) {
   return (
-    <select
+    <Select
       name={name}
       aria-label="Услуга"
       value={value}
@@ -98,6 +99,6 @@ export function CategorySelect({
             {s.name}
           </option>
         ))}
-    </select>
+    </Select>
   );
 }
