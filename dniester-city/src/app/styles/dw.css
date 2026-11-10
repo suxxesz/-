@@ -97,3 +97,24 @@ button.secondary, .chip { background: var(--surface); color: var(--ink); border:
 .dc-select-menu li[aria-disabled] { opacity: .45; cursor: not-allowed; }
 .dc-select-menu li svg { color: var(--primary); }
 .ticket-preview small { color: var(--muted); }
+/* Микроанимации: подъём карточек, появление списков. Отключаются при «уменьшить движение». */
+.event-card, .ticket-row, .quick-action, .service-card, .panel.clickable {
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s, border-color .2s;
+}
+@media (hover: hover) {
+  .event-card:hover, .ticket-row:hover, .quick-action:hover, .service-card:hover {
+    transform: translateY(-2px); border-color: color-mix(in srgb, var(--primary) 35%, var(--line)); box-shadow: var(--shadow-pop);
+  }
+}
+@keyframes dc-rise { from { opacity: 0; transform: translateY(10px); } }
+.event-grid > *, .ticket-list > *, .services-grid > *, .quick-actions > *, .contacts-grid > *, .meter-grid > *, .schedule-grid > *, .stats-grid > * { animation: dc-rise .42s cubic-bezier(.22,1,.36,1) both; }
+.event-grid > *:nth-child(2), .ticket-list > *:nth-child(2), .services-grid > *:nth-child(2), .quick-actions > *:nth-child(2) { animation-delay: .05s; }
+.event-grid > *:nth-child(3), .ticket-list > *:nth-child(3), .services-grid > *:nth-child(3), .quick-actions > *:nth-child(3) { animation-delay: .1s; }
+.event-grid > *:nth-child(n+4), .ticket-list > *:nth-child(n+4), .services-grid > *:nth-child(n+4) { animation-delay: .15s; }
+@media (max-width: 640px) {
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

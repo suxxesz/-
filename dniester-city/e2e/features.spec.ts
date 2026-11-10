@@ -104,12 +104,16 @@ test('keyboard dialog, enlarged text and browser navigation', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Настройки', exact: true })).toBeVisible();
 });
 test('accessibility on overview and meter dialog', async ({ page }) => {
+  // axe мерит контраст в моменте — без анимации появления карточки не попадают в полупрозрачный кадр.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
   await expect(page.getByRole('heading', { name: 'Ваш дом. Всё под контролем.' })).toBeVisible();
   const overview = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(
     overview.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })),
   ).toEqual([]);
   await page.getByRole('button', { name: 'Передать показания Вода, свет и газ' }).click();
+  await page.waitForTimeout(400); // дождаться конца появления окна
   const modal = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(modal.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) }))).toEqual(
     [],

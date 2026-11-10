@@ -32,6 +32,7 @@ import { serverMode, resetDemo } from '@/entities/city/api/client';
 import ModalHost from '@/widgets/modal-host/ui/ModalHost';
 import Dashboard from '@/pages/dashboard';
 import { Select } from '@/shared/ui/Select';
+import { motion } from 'framer-motion';
 const Events = lazy(() => import('@/pages/events')),
   Readings = lazy(() => import('@/pages/readings')),
   Complaints = lazy(() => import('@/pages/complaints')),
@@ -330,7 +331,14 @@ export default function App() {
             </div>
           ) : (
             <Suspense fallback={<div className="loading-panel">Открываем раздел…</div>}>
-              {pages[view]}
+              <motion.div
+                key={view}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {pages[view]}
+              </motion.div>
             </Suspense>
           )}
           <footer>

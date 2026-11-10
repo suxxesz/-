@@ -16,6 +16,7 @@ import { serverMode, resetDemo, request } from '@/entities/city/api/client';
 import { Pill, InfoStrip, Empty } from '@/shared/ui/ui';
 import { ServiceIcon, StatusPill } from '@/entities/city/ui';
 import { Select } from '@/shared/ui/Select';
+import { motion } from 'framer-motion';
 function sourceLink(url?: string) {
   return url?.startsWith('https://') ? (
     <a className="text-link" href={url} target="_blank" rel="noopener noreferrer">
@@ -44,8 +45,11 @@ export default function ModalHost() {
   const { modal, close, busy } = useCity();
   if (!modal) return null;
   return (
-    <div
+    <motion.div
       className="modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
       onClick={(e) => {
         if (e.target === e.currentTarget && !busy) close();
       }}
@@ -62,10 +66,11 @@ export default function ModalHost() {
         </div>
         <ModalBody modal={modal} />
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
 function Dialog({ children }: { children: ReactNode }) {
+  const sheet = typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches;
   const ref = useRef<HTMLDivElement>(null),
     { close } = useCity();
   useEffect(() => {
@@ -109,16 +114,19 @@ function Dialog({ children }: { children: ReactNode }) {
     };
   }, []);
   return (
-    <div
+    <motion.div
       className="modal"
       ref={ref}
+      initial={sheet ? { y: '100%' } : { opacity: 0, y: 18, scale: 0.97 }}
+      animate={sheet ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 function ModalBody({ modal }: { modal: ModalSpec }) {
