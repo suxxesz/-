@@ -13,6 +13,7 @@ import '@fontsource/montserrat/latin-700.css';
 import '@fontsource/montserrat/latin-800.css';
 import '@/app/styles/style.css';
 import '@/app/styles/dw.css';
+import '@/app/styles/map.css';
 import { CityProvider } from '@/entities/city/model/store';
 import App from '@/app/App';
 import ErrorBoundary from '@/shared/ui/ErrorBoundary';
