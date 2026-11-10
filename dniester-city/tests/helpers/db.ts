@@ -11,7 +11,12 @@ export async function migrationSql() {
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
     .sort((a, b) => parseInt(a) - parseInt(b));
-  return Promise.all(dirs.map(async (d) => ({ name: d, sql: await readFile(new URL(`${d}/migration.sql`, migrations), 'utf8') })));
+  return Promise.all(
+    dirs.map(async (d) => ({
+      name: d,
+      sql: await readFile(new URL(`${d}/migration.sql`, migrations), 'utf8'),
+    })),
+  );
 }
 
 /** Postgres в памяти (PGlite) с применёнными миграциями и Prisma Client поверх него. */

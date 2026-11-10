@@ -22,11 +22,11 @@ applyTheme();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MotionConfig reducedMotion="user">
-    <ErrorBoundary>
-      <CityProvider>
-        <App />
-      </CityProvider>
-    </ErrorBoundary>
+      <ErrorBoundary>
+        <CityProvider>
+          <App />
+        </CityProvider>
+      </ErrorBoundary>
     </MotionConfig>
   </StrictMode>,
 );

@@ -76,7 +76,12 @@ export function Select({
     if (disabled) return;
     const r = button.current?.getBoundingClientRect();
     setUp(!!r && window.innerHeight - r.bottom < 280 && r.top > 280);
-    setActive(Math.max(0, options.findIndex((o) => o.value === current)));
+    setActive(
+      Math.max(
+        0,
+        options.findIndex((o) => o.value === current),
+      ),
+    );
     setOpen(true);
   }
   function pick(o: Opt) {
@@ -117,7 +122,12 @@ export function Select({
   }
 
   return (
-    <div ref={root} className={'dc-select ' + className} data-name={name} data-open={open || undefined}>
+    <div
+      ref={root}
+      className={'dc-select ' + className}
+      data-name={name}
+      data-open={open || undefined}
+    >
       {name && <input type="hidden" name={name} value={current} />}
       <button
         ref={button}
@@ -133,7 +143,11 @@ export function Select({
         onKeyDown={key}
       >
         <span className="dc-select-value">{selected?.label}</span>
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }} className="dc-select-chev">
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.18 }}
+          className="dc-select-chev"
+        >
           <ChevronDown size={17} />
         </motion.span>
       </button>

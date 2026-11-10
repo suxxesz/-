@@ -697,7 +697,11 @@ function ActionForm({ modal }: { modal: ModalSpec }) {
           <>
             {error?.includes('лишний ноль') && (
               <label className="check">
-                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />{' '}
+                <input
+                  type="checkbox"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                />{' '}
                 Да, значение верно — отправить как есть
               </label>
             )}

@@ -1,0 +1,40 @@
+# Render Blueprint для DniesterCity: один бесплатный веб-сервис (API + фронтенд + бот в режиме webhook)
+# и бесплатная PostgreSQL. Подробно — dniester-city/docs/DEPLOY-RENDER.md.
+databases:
+  - name: dniester-city-db
+    plan: free
+    databaseName: city
+    user: city
+
+services:
+  - type: web
+    name: dniester-city
+    runtime: node
+    plan: free
+    rootDir: dniester-city
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: HOST
+        value: 0.0.0.0
+      - key: VITE_DATA_MODE
+        value: server
+      - key: BOT_MODE
+        value: webhook
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dniester-city-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: BOT_TOKEN
+        sync: false
+      - key: MINI_APP_URL
+        sync: false
+      - key: ADMIN_TELEGRAM_IDS
+        sync: false
+      - key: INTEGRATION_API_KEY
+        generateValue: true

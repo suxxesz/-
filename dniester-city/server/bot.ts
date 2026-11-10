@@ -1,7 +1,9 @@
 import 'dotenv/config';
 import { createPrisma } from './db';
 import { createTelegramClient, type TelegramUpdate } from './telegram';
-import { deliverOne } from './outbox';
+import { handleUpdate, runOutbox } from './bot-core';
+// Отдельный процесс бота (long polling) — для Docker/VPS. На бесплатном Render используется
+// режим BOT_MODE=webhook внутри веб-сервиса, см. docs/DEPLOY-RENDER.md.
 const token = process.env.BOT_TOKEN,
   url = process.env.MINI_APP_URL;
 if (!token || !url?.startsWith('https://')) throw Error('Укажите BOT_TOKEN и HTTPS MINI_APP_URL.');
@@ -10,6 +12,8 @@ const prisma = createPrisma();
 let running = true;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function poll() {
+  // Webhook и getUpdates взаимоисключающие: снимаем webhook, если он остался от режима Render.
+  await telegram('deleteWebhook', {}).catch(() => {});
   let offset = Number(
     (await prisma.botState.findUnique({ where: { key: 'telegram_offset' } }))?.value || 0,
   );
@@ -21,15 +25,7 @@ async function poll() {
         allowed_updates: ['message'],
       });
       for (const update of updates) {
-        const m = update.message;
-        if (m?.chat.type === 'private' && !m.from?.is_bot && m.text?.startsWith('/start'))
-          await telegram('sendMessage', {
-            chat_id: m.chat.id,
-            text: 'Мой город — коммунальные услуги вашего дома. Выберите адрес в приложении, чтобы подписаться на события, сохранить показания и обращения.',
-            reply_markup: {
-              inline_keyboard: [[{ text: 'Открыть «Мой город»', web_app: { url } }]],
-            },
-          });
+        await handleUpdate(telegram, update, url!);
         offset = update.update_id + 1;
         await prisma.botState.upsert({
           where: { key: 'telegram_offset' },
@@ -43,24 +39,11 @@ async function poll() {
     }
   }
 }
-async function outbox() {
-  while (running) {
-    try {
-      const processed = await deliverOne(prisma, (chatId, text) =>
-        telegram('sendMessage', { chat_id: chatId, text }),
-      );
-      await sleep(processed ? 300 : 1500);
-    } catch {
-      console.error('Очередь временно недоступна. Повтор через 5 секунд.');
-      await sleep(5000);
-    }
-  }
-}
 process.on('SIGTERM', () => {
   running = false;
 });
 process.on('SIGINT', () => {
   running = false;
 });
-await Promise.all([poll(), outbox()]);
+await Promise.all([poll(), runOutbox(prisma, telegram, () => running)]);
 await prisma.$disconnect();

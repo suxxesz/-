@@ -23,7 +23,13 @@ export default function RouteMap({ route }: { route: Route }) {
     L.polyline(line, { color: route.color, weight: 5 }).addTo(layer);
     route.stops.forEach((s, i) => {
       const end = i === 0 || i === route.stops.length - 1;
-      L.circleMarker([s.lat, s.lng], { radius: end ? 8 : 5, color: route.color, weight: 3, fillColor: '#fff', fillOpacity: 1 })
+      L.circleMarker([s.lat, s.lng], {
+        radius: end ? 8 : 5,
+        color: route.color,
+        weight: 3,
+        fillColor: '#fff',
+        fillOpacity: 1,
+      })
         .bindTooltip(s.name, { className: 'dc-map-tip', direction: 'top', permanent: end })
         .addTo(layer);
     });

@@ -42,5 +42,13 @@ export function locateControl(map: L.Map) {
     },
   });
   new Control({ position: 'bottomright' }).addTo(map);
-  map.on('locationfound', (e) => L.circleMarker(e.latlng, { radius: 7, color: '#fff', weight: 3, fillColor: '#1f5fd6', fillOpacity: 1 }).addTo(map));
+  map.on('locationfound', (e) =>
+    L.circleMarker(e.latlng, {
+      radius: 7,
+      color: '#fff',
+      weight: 3,
+      fillColor: '#1f5fd6',
+      fillOpacity: 1,
+    }).addTo(map),
+  );
 }

@@ -78,9 +78,33 @@ export const routes: Route[] = [
 ];
 
 export const taxis: TaxiService[] = [
-  { id: 't1', name: 'Такси «Город»', phone: '+373 533 0 00 01', minFare: 20, perKm: 4, features: ['Детское кресло', 'Безнал'], hours: '24/7' },
-  { id: 't2', name: 'Такси «Днестр»', phone: '+373 533 0 00 02', minFare: 18, perKm: 4.5, features: ['Минивэн', 'Межгород'], hours: '24/7' },
-  { id: 't3', name: 'Эконом-такси', phone: '+373 533 0 00 03', minFare: 15, perKm: 3.5, features: ['Самая низкая цена'], hours: ['06:00', '00:00'] },
+  {
+    id: 't1',
+    name: 'Такси «Город»',
+    phone: '+373 533 0 00 01',
+    minFare: 20,
+    perKm: 4,
+    features: ['Детское кресло', 'Безнал'],
+    hours: '24/7',
+  },
+  {
+    id: 't2',
+    name: 'Такси «Днестр»',
+    phone: '+373 533 0 00 02',
+    minFare: 18,
+    perKm: 4.5,
+    features: ['Минивэн', 'Межгород'],
+    hours: '24/7',
+  },
+  {
+    id: 't3',
+    name: 'Эконом-такси',
+    phone: '+373 533 0 00 03',
+    minFare: 15,
+    perKm: 3.5,
+    features: ['Самая низкая цена'],
+    hours: ['06:00', '00:00'],
+  },
 ];
 
 const toMin = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
@@ -109,7 +133,9 @@ export function distanceKm(a: { lat: number; lng: number }, b: { lat: number; ln
     rad = Math.PI / 180,
     dLat = (b.lat - a.lat) * rad,
     dLng = (b.lng - a.lng) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
   return 2 * r * Math.asin(Math.sqrt(h));
 }
 

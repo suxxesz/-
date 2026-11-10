@@ -19,8 +19,17 @@ try {
         o.categories.some((c: string) => !services.some((s) => s.id === c))
       )
         throw Error('Проверьте организацию и её зону обслуживания.');
-      const fields = { name: o.name, categories: o.categories, addresses: o.addresses, connected: Boolean(o.connected) };
-      await db.organization.upsert({ where: { id: o.id }, create: { id: o.id, ...fields }, update: fields });
+      const fields = {
+        name: o.name,
+        categories: o.categories,
+        addresses: o.addresses,
+        connected: Boolean(o.connected),
+      };
+      await db.organization.upsert({
+        where: { id: o.id },
+        create: { id: o.id, ...fields },
+        update: fields,
+      });
     }
     for (const staff of config.dispatchers || []) {
       const result = await db.user.updateMany({

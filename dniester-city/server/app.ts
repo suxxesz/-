@@ -6,6 +6,7 @@ import { fileName, uploadDir } from './files';
 import { resolve } from 'node:path';
 import { Prisma, isUniqueViolation, type Db, type PrismaClient } from './db';
 import { verifyTelegram, readSession, signSession } from './auth';
+import type { TelegramUpdate } from './telegram';
 import { emptyPrefs, stateFor, mutate, toUser, type User } from './store';
 import { parseAction } from '../src/entities/city/model/contracts';
 import { applyAction } from '../src/entities/city/model/actions';
@@ -16,6 +17,8 @@ export type AppOptions = {
   adminIds: string[];
   staticDirectory?: string;
   integrationKey?: string;
+  /** Режим webhook бота (бесплатный Render): секрет из setWebhook и обработчик обновления. */
+  telegramWebhook?: { secret: string; onUpdate: (update: TelegramUpdate) => Promise<void> };
 };
 export function createApp(options: AppOptions) {
   const { prisma, sessionSecret: secret } = options;
@@ -55,6 +58,28 @@ export function createApp(options: AppOptions) {
     } catch {
       res.status(503).json({ ok: false });
     }
+  });
+  // Telegram шлёт обновления сюда в режиме webhook; запрос заодно будит уснувший сервис Render.
+  app.post('/api/telegram/webhook', async (req, res) => {
+    const hook = options.telegramWebhook,
+      digest = (v: string) => createHash('sha256').update(v).digest();
+    if (!hook) {
+      res.status(404).json({ error: 'Метод не найден.' });
+      return;
+    }
+    if (
+      !timingSafeEqual(
+        digest(String(req.header('x-telegram-bot-api-secret-token') || '')),
+        digest(hook.secret),
+      )
+    ) {
+      res.status(401).end();
+      return;
+    }
+    res.json({ ok: true }); // отвечаем сразу, чтобы Telegram не повторял доставку
+    await hook
+      .onUpdate(req.body as TelegramUpdate)
+      .catch(() => console.error('Не удалось ответить в Telegram.'));
   });
   app.post('/api/auth/telegram', async (req, res) => {
     try {
@@ -137,7 +162,10 @@ export function createApp(options: AppOptions) {
       return;
     }
     const { organizationId, items } = parsed.data,
-      org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } });
+      org = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true },
+      });
     if (!org) {
       res.status(404).json({ error: 'Организация не найдена.' });
       return;
@@ -147,13 +175,30 @@ export function createApp(options: AppOptions) {
     for (const i of items) {
       const id = `ext-${organizationId}-${i.externalId}`,
         data = {
-          id, category: i.category, title: i.title, description: i.description,
-          addresses: i.addresses, start: i.start, end: i.end || '', status: 'Черновик',
-          source: org.name, sourceUrl: i.sourceUrl, updated: now, version: 1,
+          id,
+          category: i.category,
+          title: i.title,
+          description: i.description,
+          addresses: i.addresses,
+          start: i.start,
+          end: i.end || '',
+          status: 'Черновик',
+          source: org.name,
+          sourceUrl: i.sourceUrl,
+          updated: now,
+          version: 1,
           history: [`${now} · Черновик получен по API организации`],
         },
         r = await prisma.record.createMany({
-          data: [{ id, kind: 'event', owner_id: null, organization_id: organizationId, data: JSON.parse(JSON.stringify(data)) }],
+          data: [
+            {
+              id,
+              kind: 'event',
+              owner_id: null,
+              organization_id: organizationId,
+              data: JSON.parse(JSON.stringify(data)),
+            },
+          ],
           skipDuplicates: true,
         });
       created += r.count;
@@ -166,7 +211,11 @@ export function createApp(options: AppOptions) {
       return;
     }
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.sendFile(req.params.name, { root: uploadDir }, (e) => e && !res.headersSent && res.status(404).end());
+    res.sendFile(
+      req.params.name,
+      { root: uploadDir },
+      (e) => e && !res.headersSent && res.status(404).end(),
+    );
   });
   app.get(
     '/api/state',
@@ -179,9 +228,12 @@ export function createApp(options: AppOptions) {
     withDb(async (_db, req, res) => {
       try {
         // Вся мутация — одна транзакция: при любой ошибке Prisma откатывает её целиком.
-        const result = await prisma.$transaction((tx) => mutate(tx, res.locals.user as User, req.body), {
-          timeout: 15_000,
-        });
+        const result = await prisma.$transaction(
+          (tx) => mutate(tx, res.locals.user as User, req.body),
+          {
+            timeout: 15_000,
+          },
+        );
         res.json(result);
       } catch (e) {
         if (isUniqueViolation(e)) {

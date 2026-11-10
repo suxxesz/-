@@ -9,11 +9,19 @@ import { createMap, locateControl, pin } from '@/shared/lib/map';
 const icon = (e: CityEvent) =>
   pin(
     serviceById(e.category).color,
-    renderToStaticMarkup(createElement(serviceIcons[e.category], { size: 16, color: '#fff', strokeWidth: 2.4 })),
+    renderToStaticMarkup(
+      createElement(serviceIcons[e.category], { size: 16, color: '#fff', strokeWidth: 2.4 }),
+    ),
     e.status === 'Выполняется',
   );
 
-export default function MapView({ events, onSelect }: { events: CityEvent[]; onSelect: (e: CityEvent) => void }) {
+export default function MapView({
+  events,
+  onSelect,
+}: {
+  events: CityEvent[];
+  onSelect: (e: CityEvent) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null),
     selectRef = useRef(onSelect),
     [map, setMap] = useState<L.Map>();
@@ -50,7 +58,9 @@ export default function MapView({ events, onSelect }: { events: CityEvent[]; onS
   }, [map, events]);
   return (
     <>
-      <InfoStrip>Учебная карта: точки условные. В пилоте координаты будут привязаны к проверенным адресам.</InfoStrip>
+      <InfoStrip>
+        Учебная карта: точки условные. В пилоте координаты будут привязаны к проверенным адресам.
+      </InfoStrip>
       <div ref={ref} className="map" aria-label="Карта коммунальных событий" />
       <div className="map-legend" aria-hidden="true">
         {[...new Set(events.map((e) => e.category))].map((c) => (

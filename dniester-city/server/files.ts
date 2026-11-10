@@ -3,8 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 export const uploadDir = resolve(process.env.UPLOAD_DIR || 'uploads');
 const types: Record<string, string> = {
-  'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
-  'video/mp4': 'mp4', 'video/webm': 'webm',
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
 };
 export const fileName = /^[0-9a-f-]{36}\.(jpg|png|webp|gif|mp4|webm)$/;
 /** Сохраняет data-URL на диск и возвращает URL; обычные ссылки возвращает как есть. */

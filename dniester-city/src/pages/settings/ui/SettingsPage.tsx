@@ -41,14 +41,30 @@ export default function Settings() {
           <h2>Оформление</h2>
           <label>
             Тема
-            <Select aria-label="Тема" defaultValue={currentTheme()[0]} onChange={(e) => applyTheme(e.target.value, currentTheme()[1])}>
-              {themes.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+            <Select
+              aria-label="Тема"
+              defaultValue={currentTheme()[0]}
+              onChange={(e) => applyTheme(e.target.value, currentTheme()[1])}
+            >
+              {themes.map(([v, n]) => (
+                <option key={v} value={v}>
+                  {n}
+                </option>
+              ))}
             </Select>
           </label>
           <label>
             Акцентный цвет
-            <Select aria-label="Акцентный цвет" defaultValue={currentTheme()[1]} onChange={(e) => applyTheme(currentTheme()[0], e.target.value)}>
-              {accents.map(([v, n]) => <option key={v} value={v}>{n}</option>)}
+            <Select
+              aria-label="Акцентный цвет"
+              defaultValue={currentTheme()[1]}
+              onChange={(e) => applyTheme(currentTheme()[0], e.target.value)}
+            >
+              {accents.map(([v, n]) => (
+                <option key={v} value={v}>
+                  {n}
+                </option>
+              ))}
             </Select>
           </label>
         </section>

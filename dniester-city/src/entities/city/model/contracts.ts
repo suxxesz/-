@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { categories, eventStatuses, ticketStatuses, reportTypes, reportStatuses, PMR_BOUNDS } from './types';
+import {
+  categories,
+  eventStatuses,
+  ticketStatuses,
+  reportTypes,
+  reportStatuses,
+  PMR_BOUNDS,
+} from './types';
 const text = (max = 2000) =>
   z.string().trim().min(1, 'Заполните обязательное поле.').max(max, 'Слишком длинное значение.');
 const category = z.enum(categories),
@@ -66,7 +73,10 @@ export const actionSchema = z.discriminatedUnion('type', [
     address: text(180),
     lat: z.number().min(PMR_BOUNDS.south, 'Точка вне ПМР.').max(PMR_BOUNDS.north, 'Точка вне ПМР.'),
     lng: z.number().min(PMR_BOUNDS.west, 'Точка вне ПМР.').max(PMR_BOUNDS.east, 'Точка вне ПМР.'),
-    media: z.string().startsWith('data:', 'Прикрепите фото или видео.').max(3_000_000, 'Файл слишком большой.'),
+    media: z
+      .string()
+      .startsWith('data:', 'Прикрепите фото или видео.')
+      .max(3_000_000, 'Файл слишком большой.'),
     mediaKind: z.enum(['image', 'video']),
   }),
   shape('report.status', {

@@ -166,3 +166,35 @@ test('HTTP login, role revocation, idempotent mutation, draft isolation and publ
     await close();
   }
 });
+test('Telegram webhook accepts only the configured secret', async () => {
+  const { prisma, close } = await testDb();
+  const seen: number[] = [];
+  const app = createApp({
+      prisma,
+      sessionSecret: 't'.repeat(64),
+      botToken: bot,
+      adminIds: [],
+      telegramWebhook: {
+        secret: 'hook-secret',
+        onUpdate: async (u) => void seen.push(u.update_id),
+      },
+    }),
+    server = app.listen(0, '127.0.0.1');
+  await new Promise<void>((r) => server.once('listening', r));
+  const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/telegram/webhook`;
+  const post = (secret: string) =>
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-Bot-Api-Secret-Token': secret },
+      body: JSON.stringify({ update_id: 7 }),
+    });
+  try {
+    assert.equal((await post('wrong')).status, 401);
+    assert.equal((await post('hook-secret')).status, 200);
+    await new Promise((r) => setTimeout(r, 50));
+    assert.deepEqual(seen, [7]);
+  } finally {
+    await new Promise<void>((r, j) => server.close((e) => (e ? j(e) : r())));
+    await close();
+  }
+});

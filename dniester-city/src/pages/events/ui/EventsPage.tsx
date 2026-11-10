@@ -36,14 +36,32 @@ export default function Events() {
         subtitle="Что происходит по вашему адресу и когда ожидается восстановление."
       />
       <div className="chips" role="group" aria-label="Направления">
-        <button className={'chip ' + (filter === 'all' ? 'on' : '')} aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>
+        <button
+          className={'chip ' + (filter === 'all' ? 'on' : '')}
+          aria-pressed={filter === 'all'}
+          onClick={() => setFilter('all')}
+        >
           Все направления
         </button>
         {services.map((s) => (
-          <button key={s.id} className={'chip ' + (filter === s.id ? 'on' : '')} aria-pressed={filter === s.id} onClick={() => setFilter(s.id)}>
+          <button
+            key={s.id}
+            className={'chip ' + (filter === s.id ? 'on' : '')}
+            aria-pressed={filter === s.id}
+            onClick={() => setFilter(s.id)}
+          >
             <ServiceIcon category={s.id} size={15} />
             {s.short}
-            <small>{state.events.filter((e) => e.category === s.id && e.status !== 'Черновик' && e.addresses.includes(state.activeAddress)).length}</small>
+            <small>
+              {
+                state.events.filter(
+                  (e) =>
+                    e.category === s.id &&
+                    e.status !== 'Черновик' &&
+                    e.addresses.includes(state.activeAddress),
+                ).length
+              }
+            </small>
           </button>
         ))}
       </div>

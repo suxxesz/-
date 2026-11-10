@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CJM «Мой город»</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap">
+<style>
+/* Раскладка: шапка-тезис → персоны → лента этапов с кривой эмоций → путь диспетчера → принципы. Цвета продукта. */
+:root {
+  --bg: #f3f6fb; --surface: #ffffff; --surface-2: #eef3fb; --line: #dbe4f1;
+  --ink: #0f1f38; --muted: #4d5f7b; --primary: #1f5fd6; --primary-soft: #e6eefd; --accent-ink: #1a54c2;
+  --ok: #137a52; --ok-soft: #e3f3ec; --warn: #854a00; --warn-soft: #fbf0df; --bad: #b4372b; --bad-soft: #fbe6e3;
+  --display: 'Montserrat', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #070e1b; --surface: #0d1829; --surface-2: #111f35; --line: #1e3150;
+  --ink: #e8f0fb; --muted: #a3b4cc; --primary: #3f7df0; --primary-soft: #15284a; --accent-ink: #8fb6ff;
+  --ok: #4cc795; --ok-soft: #10301f; --warn: #e8a647; --warn-soft: #33250f; --bad: #f07a6a; --bad-soft: #3a1915; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #070e1b; --surface: #0d1829; --surface-2: #111f35; --line: #1e3150;
+  --ink: #e8f0fb; --muted: #a3b4cc; --primary: #3f7df0; --primary-soft: #15284a; --accent-ink: #8fb6ff;
+  --ok: #4cc795; --ok-soft: #10301f; --warn: #e8a647; --warn-soft: #33250f; --bad: #f07a6a; --bad-soft: #3a1915; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 4.6vw, 48px); font-weight: 800; line-height: 1.1; }
+h2 { font-size: 22px; font-weight: 800; }
+h3 { font-size: 15px; font-weight: 700; }
+p { margin: 0; }
+.eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink); }
+.lead { color: var(--muted); max-width: 62ch; font-size: 16px; }
+header { display: grid; gap: 12px; }
+section { display: grid; gap: 16px; }
+.personas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.persona { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 20px; display: grid; gap: 10px; align-content: start; }
+.persona .who { display: flex; gap: 12px; align-items: center; }
+.avatar { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font: 800 17px var(--display); color: #fff; background: var(--primary); flex-shrink: 0; }
+.persona dl { margin: 0; display: grid; grid-template-columns: 76px 1fr; gap: 4px 10px; font-size: 13.5px; }
+.persona dt { color: var(--muted); }
+.persona dd { margin: 0; }
+.curve { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px 18px 8px; overflow-x: auto; }
+.curve svg { display: block; min-width: 720px; width: 100%; height: auto; }
+.curve text { fill: var(--muted); font: 500 12px var(--body); }
+.curve .score { fill: var(--ink); font: 700 12px var(--body); }
+.stages { overflow-x: auto; padding-bottom: 6px; }
+.grid { display: grid; grid-template-columns: repeat(8, minmax(210px, 1fr)); gap: 10px; min-width: 1720px; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.stage .n { font: 800 12px var(--display); color: var(--accent-ink); letter-spacing: .06em; }
+.row { display: grid; gap: 2px; font-size: 13px; }
+.row b { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.quote { font-style: italic; color: var(--ink); }
+.mood { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; padding: 3px 10px; border-radius: 999px; width: fit-content; font-variant-numeric: tabular-nums; }
+.m-hi { background: var(--ok-soft); color: var(--ok); }
+.m-mid { background: var(--warn-soft); color: var(--warn); }
+.m-lo { background: var(--bad-soft); color: var(--bad); }
+.pain { border-left: 3px solid var(--bad); padding-left: 8px; }
+.fix { background: var(--primary-soft); color: var(--ink); border-radius: 10px; padding: 8px 10px; }
+.fix .tag { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); }
+.table { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; counter-reset: p; }
+.principle { padding: 16px 18px; border-radius: 16px; background: var(--surface-2); display: grid; gap: 4px; }
+.principle p { color: var(--muted); font-size: 14px; }
+.next { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 8px 14px; border-radius: 999px; border: 1px dashed var(--line); background: var(--surface); font-size: 13.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .stage { transition: transform .2s; } .stage:hover { transform: translateY(-2px); } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Customer Journey Map · для дизайнера · v0.3</span>
+    <h1>Путь жителя от QR в подъезде до «удобно, всё в одном»</h1>
+    <p class="lead">Где пользователи «Моего города» радуются, где спотыкаются и что из этого уже закрыто в текущей версии. Галочка «сделано» значит, что решение есть в продукте; «идея» — гипотеза для следующих макетов.</p>
+  </header>
+
+  <section aria-labelledby="p-h">
+    <h2 id="p-h">Персоны</h2>
+    <div class="personas">
+      <article class="persona"><div class="who"><span class="avatar">Г</span><div><h3>Галина Петровна, 61</h3><small style="color:var(--muted)">пенсионерка, Тирасполь</small></div></div>
+        <dl><dt>Цель</dt><dd>Знать, когда дадут воду, вовремя сдать показания</dd><dt>Страх</dt><dd>«Нажму не то», мелкий текст</dd><dt>Устройство</dt><dd>Android, крупный шрифт</dd></dl></article>
+      <article class="persona"><div class="who"><span class="avatar" style="background:#0ea5a4">А</span><div><h3>Артём, 27</h3><small style="color:var(--muted)">живёт в Тирасполе, работает в Бендерах</small></div></div>
+        <dl><dt>Цель</dt><dd>Быстро: маршрутка, такси, отключение света</dd><dt>Страх</dt><dd>Потерять время на лишние экраны</dd><dt>Устройство</dt><dd>iPhone, тёмная тема</dd></dl></article>
+      <article class="persona"><div class="who"><span class="avatar" style="background:#7d65a5">О</span><div><h3>Ольга, 38</h3><small style="color:var(--muted)">диспетчер водоканала</small></div></div>
+        <dl><dt>Цель</dt><dd>Меньше одинаковых звонков, понятная очередь</dd><dt>Страх</dt><dd>Ошибиться адресом и разослать всем</dd><dt>Устройство</dt><dd>ПК 1366×768</dd></dl></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="c-h">
+    <h2 id="c-h">Кривая эмоций жителя</h2>
+    <div class="curve">
+      <svg viewBox="0 0 860 230" role="img" aria-label="Оценки по этапам: 2, 3, 3, 5, 4, 2, 4, 4 из 5">
+        <g stroke="var(--line)" stroke-width="1">
+          <line x1="60" y1="30" x2="840" y2="30"/><line x1="60" y1="65" x2="840" y2="65"/><line x1="60" y1="100" x2="840" y2="100"/><line x1="60" y1="135" x2="840" y2="135"/><line x1="60" y1="170" x2="840" y2="170"/>
+        </g>
+        <g text-anchor="end"><text x="48" y="34">5</text><text x="48" y="69">4</text><text x="48" y="104">3</text><text x="48" y="139">2</text><text x="48" y="174">1</text></g>
+        <path d="M100 135 L200 100 L300 100 L400 30 L500 65 L600 135 L700 65 L800 65 L800 170 L100 170 Z" fill="var(--primary-soft)" stroke="none"/>
+        <polyline points="100,135 200,100 300,100 400,30 500,65 600,135 700,65 800,65" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linejoin="round"/>
+        <g fill="var(--surface)" stroke="var(--primary)" stroke-width="3">
+          <circle cx="100" cy="135" r="6"/><circle cx="200" cy="100" r="6"/><circle cx="300" cy="100" r="6"/><circle cx="400" cy="30" r="7" fill="var(--primary)"/><circle cx="500" cy="65" r="6"/><circle cx="600" cy="135" r="7" stroke="var(--bad)"/><circle cx="700" cy="65" r="6"/><circle cx="800" cy="65" r="6"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="100" y="200">Узнать</text><text x="200" y="200">Подключиться</text><text x="300" y="200">Настроить</text><text x="400" y="200">Отключение</text><text x="500" y="200">Показания</text><text x="600" y="200">Жалоба</text><text x="700" y="200">Поехать</text><text x="800" y="200">Вернуться</text>
+          <text class="score" x="400" y="18">пик: пуш заранее</text><text class="score" x="600" y="158" style="fill:var(--bad)">провал: «услышат ли?»</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-h">
+    <h2 id="s-h">Этапы пути</h2>
+    <div class="legend"><span><span class="mood m-hi">4–5</span> радует</span><span><span class="mood m-mid">3</span> терпимо</span><span><span class="mood m-lo">1–2</span> болит</span><span>Лента прокручивается вбок →</span></div>
+    <div class="stages" tabindex="0" aria-label="Этапы пути, прокрутка по горизонтали">
+      <div class="grid">
+        <article class="stage"><span class="n">ЭТАП 1</span><h3>Узнать</h3><span class="mood m-lo">2 / 5</span>
+          <div class="row"><b>Действие</b>Видит пост или QR в подъезде</div><div class="row"><b>Контакт</b>Объявление, чат дома</div>
+          <p class="quote">«Ещё одно приложение?»</p><div class="row pain">Недоверие, лень ставить</div>
+          <div class="fix"><span class="tag">сделано</span><br>QR ведёт сразу в бота, устанавливать ничего не нужно</div></article>
+        <article class="stage"><span class="n">ЭТАП 2</span><h3>Подключиться</h3><span class="mood m-mid">3 / 5</span>
+          <div class="row"><b>Действие</b>/start → «Открыть» → добавить адрес</div><div class="row"><b>Контакт</b>Бот, Mini App, главная</div>
+          <p class="quote">«А где мой дом?»</p><div class="row pain">Ввод адреса, страх ошибиться</div>
+          <div class="fix"><span class="tag">сделано</span><br>Одна кнопка «Добавить адрес», несколько адресов, переключатель в шапке</div></article>
+        <article class="stage"><span class="n">ЭТАП 3</span><h3>Настроить</h3><span class="mood m-mid">3 / 5</span>
+          <div class="row"><b>Действие</b>Отметить услуги для уведомлений</div><div class="row"><b>Контакт</b>Настройки</div>
+          <p class="quote">«Что мне вообще нужно?»</p><div class="row pain">Много переключателей</div>
+          <div class="fix"><span class="tag">сделано</span><br>По умолчанию все услуги, отдельно по каждому адресу<br><span class="tag">идея</span> онбординг из 3 карточек</div></article>
+        <article class="stage"><span class="n">ЭТАП 4</span><h3>Узнать об отключении</h3><span class="mood m-hi">5 / 5</span>
+          <div class="row"><b>Действие</b>Пуш в Telegram → карточка события</div><div class="row"><b>Контакт</b>Бот, «Отключения и работы», карта</div>
+          <p class="quote">«Наконец-то заранее!»</p><div class="row pain">«Срок неизвестен» раздражает</div>
+          <div class="fix"><span class="tag">сделано</span><br>Честный статус, источник, история; пульс на карте у текущих работ<br><span class="tag">идея</span> «напомнить, когда дадут»</div></article>
+        <article class="stage"><span class="n">ЭТАП 5</span><h3>Сдать показания</h3><span class="mood m-hi">4 / 5</span>
+          <div class="row"><b>Действие</b>Счётчик → значение → график</div><div class="row"><b>Контакт</b>Показания счётчиков</div>
+          <p class="quote">«Не перепутать бы счётчики»</p><div class="row pain">Несколько счётчиков одной услуги</div>
+          <div class="fix"><span class="tag">сделано</span><br>Название и заводской номер, запрет «меньше прошлого», CSV<br><span class="tag">идея</span> фото счётчика</div></article>
+        <article class="stage"><span class="n">ЭТАП 6</span><h3>Пожаловаться</h3><span class="mood m-lo">2 / 5</span>
+          <div class="row"><b>Действие</b>Заявка или жалоба с фото и точкой</div><div class="row"><b>Контакт</b>Мои заявки, Книга жалоб, карта</div>
+          <p class="quote">«Услышат ли?»</p><div class="row pain">Неизвестность после отправки</div>
+          <div class="fix"><span class="tag">сделано</span><br>История статусов, уведомление о решении<br><span class="tag">идея</span> срок ответа (SLA) на карточке</div></article>
+        <article class="stage"><span class="n">ЭТАП 7</span><h3>Поехать</h3><span class="mood m-hi">4 / 5</span>
+          <div class="row"><b>Действие</b>Маршрутка или такси</div><div class="row"><b>Контакт</b>Транспорт</div>
+          <p class="quote">«Успею?»</p><div class="row pain">Нет живого GPS</div>
+          <div class="fix"><span class="tag">сделано</span><br>«Через N мин» по времени ПМР, цена такси, звонок в одно касание<br><span class="tag">идея</span> GPS перевозчика</div></article>
+        <article class="stage"><span class="n">ЭТАП 8</span><h3>Вернуться</h3><span class="mood m-hi">4 / 5</span>
+          <div class="row"><b>Действие</b>Открывает при новом пуше</div><div class="row"><b>Контакт</b>Бот, главная</div>
+          <p class="quote">«Удобно, всё в одном»</p><div class="row pain">Боли нет</div>
+          <div class="fix"><span class="tag">сделано</span><br>Обзор: события, заявки, быстрые действия</div></article>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="d-h">
+    <h2 id="d-h">Путь диспетчера</h2>
+    <div class="table"><table>
+      <thead><tr><th>Этап</th><th>Действие</th><th>Боль</th><th>Решение в продукте</th></tr></thead>
+      <tbody>
+        <tr><td><b>Принять заявку</b></td><td>Очередь, фильтры</td><td>Дубли и хаос звонков</td><td>Очередь со статусами по шагам</td></tr>
+        <tr><td><b>Сообщить об отключении</b></td><td>Черновик → предпросмотр → публикация</td><td>Страх разослать не тем</td><td>Черновик без рассылки и число получателей до публикации</td></tr>
+        <tr><td><b>Обновить срок</b></td><td>Правка события</td><td>Коллега уже поменял</td><td>Версии и предупреждение о конфликте</td></tr>
+        <tr><td><b>Отчитаться</b></td><td>Экспорт показаний</td><td>Ручная сводка</td><td>CSV для Excel</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section aria-labelledby="pr-h">
+    <h2 id="pr-h">Принципы для макетов</h2>
+    <div class="principles">
+      <div class="principle"><h3>Одна главная кнопка</h3><p>Галина Петровна с первого взгляда понимает, что нажать.</p></div>
+      <div class="principle"><h3>Статус словами</h3><p>«В работе», «Срок неизвестен». Цвет дополняет, контраст AA проверяется тестом.</p></div>
+      <div class="principle"><h3>Светлая бело-синяя по умолчанию</h3><p>Тёмная тема полноценная, со своими токенами, а не инверсия.</p></div>
+      <div class="principle"><h3>Телефон первым</h3><p>Нижняя навигация, диалоги шторкой снизу, поля от 44 px.</p></div>
+      <div class="principle"><h3>Движение по делу</h3><p>Появление, подъём карточки, пульс у текущих работ. Отключается системным «уменьшить движение».</p></div>
+      <div class="principle"><h3>Честность</h3><p>Учебные данные помечены; «сохранено в сервисе» не выдаётся за «принято поставщиком».</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="n-h">
+    <h2 id="n-h">Гипотезы на следующие макеты</h2>
+    <div class="next"><span class="chip">Онбординг из 3 шагов</span><span class="chip">«Напомнить, когда дадут воду»</span><span class="chip">Фото счётчика с распознаванием</span><span class="chip">GPS маршруток от перевозчика</span><span class="chip">Срок ответа по заявке и оценка решения</span></div>
+  </section>
+</div>
+</body>
+</html>

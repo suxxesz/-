@@ -67,7 +67,9 @@ async function organizationsFor(db: Db, user: User): Promise<Organization[]> {
   const rows =
     user.role === 'admin'
       ? await db.organization.findMany({ orderBy: { name: 'asc' } })
-      : await db.$queryRaw<Record<string, unknown>[]>`SELECT * FROM organizations WHERE id=${user.organization_id} OR addresses ?| ${user.prefs.addresses}::text[] ORDER BY name`;
+      : await db.$queryRaw<
+          Record<string, unknown>[]
+        >`SELECT * FROM organizations WHERE id=${user.organization_id} OR addresses ?| ${user.prefs.addresses}::text[] ORDER BY name`;
   return rows.map((r) => organizationFromRow(r as Record<string, unknown>));
 }
 export function canManage(
@@ -89,7 +91,9 @@ export async function stateFor(db: Db, user: User): Promise<State> {
     org = organizations.find((o) => o.id === user.organization_id);
   const staff = user.role !== 'resident';
   // Filter at the database boundary: personal records, public address events, or assigned staff records.
-  const records = await db.$queryRaw<RecordRow[]>`SELECT id,kind,owner_id,organization_id,data FROM records WHERE
+  const records = await db.$queryRaw<
+    RecordRow[]
+  >`SELECT id,kind,owner_id,organization_id,data FROM records WHERE
   owner_id=${user.id} OR
   (kind IN ('event','schedule') AND COALESCE(data->>'status','')<>'Черновик' AND ((data->'addresses') ?| ${user.prefs.addresses}::text[] OR ${JSON.stringify(user.prefs.addresses)}::jsonb ? (data->>'address'))) OR
   ${user.role === 'admin'}::boolean OR
@@ -142,7 +146,9 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
   const action = parseAction(raw);
   // Блокировка строки пользователя на время транзакции — FOR UPDATE есть только в сыром SQL.
   const locked = (
-    await db.$queryRaw<Parameters<typeof toUser>[0][]>`SELECT * FROM users WHERE id=${provided.id} FOR UPDATE`
+    await db.$queryRaw<
+      Parameters<typeof toUser>[0][]
+    >`SELECT * FROM users WHERE id=${provided.id} FOR UPDATE`
   )[0];
   if (!locked) throw Error('Пользователь не найден.');
   const user = toUser(locked);
@@ -161,22 +167,30 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
   if (
     'id' in p &&
     p.id &&
-    ['ticket.status', 'report.status', 'ticket.reopen', 'event.update', 'event.publish', 'schedule.save'].includes(
-      action.type,
-    )
+    [
+      'ticket.status',
+      'report.status',
+      'ticket.reopen',
+      'event.update',
+      'event.publish',
+      'schedule.save',
+    ].includes(action.type)
   ) {
-    const record = (await db.$queryRaw<RecordRow[]>`SELECT * FROM records WHERE id=${p.id} FOR UPDATE`)[0];
+    const record = (
+      await db.$queryRaw<RecordRow[]>`SELECT * FROM records WHERE id=${p.id} FOR UPDATE`
+    )[0];
     const expectedKind = action.type.startsWith('ticket.')
       ? 'ticket'
       : action.type.startsWith('report.')
         ? 'report'
         : action.type.startsWith('event.')
-        ? 'event'
-        : 'schedule';
+          ? 'event'
+          : 'schedule';
     if (!record || record.kind !== expectedKind) throw Error('Запись не найдена.');
     if (action.type === 'ticket.reopen') {
       if (record.owner_id !== user.id) throw Error('Нет доступа к заявке.');
-    } else if (record.kind !== 'report' && !canManage(user, org, record)) throw Error('Нет доступа к организации или адресу.');
+    } else if (record.kind !== 'report' && !canManage(user, org, record))
+      throw Error('Нет доступа к организации или адресу.');
   }
   if (action.type === 'event.create' || action.type === 'schedule.save') {
     const values = action.payload,
@@ -192,7 +206,9 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
     if (org) values.source = org.name;
   }
   if (action.type === 'reading.create' && action.payload.meterId) {
-    const meter = await db.record.findFirst({ where: { id: action.payload.meterId, kind: 'meter' } });
+    const meter = await db.record.findFirst({
+      where: { id: action.payload.meterId, kind: 'meter' },
+    });
     if (!meter || meter.owner_id !== user.id) throw Error('Нет доступа к счётчику.');
   }
   const before = await stateFor(db, user);
@@ -229,7 +245,9 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
     ['schedules', 'schedule'],
   ] as const;
   for (const [field, kind] of fieldKinds) {
-    const old = new Map(((domainState[field] ?? []) as { id: string }[]).map((x) => [x.id, JSON.stringify(x)]));
+    const old = new Map(
+      ((domainState[field] ?? []) as { id: string }[]).map((x) => [x.id, JSON.stringify(x)]),
+    );
     for (const item of (after[field] ?? []) as (CityEvent & { address: string })[])
       if (old.get(item.id) !== JSON.stringify(item)) {
         const addresses: string[] = item.addresses ?? [item.address];
@@ -253,7 +271,13 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
         const organizationId = kind === 'event' && org ? org.id : matches[0]?.id || null;
         await db.record.upsert({
           where: { id: item.id },
-          create: { id: item.id, kind, owner_id: user.id, organization_id: organizationId, data: json(item) },
+          create: {
+            id: item.id,
+            kind,
+            owner_id: user.id,
+            organization_id: organizationId,
+            data: json(item),
+          },
           update: { data: json(item), organization_id: organizationId, updated_at: new Date() },
         });
         await db.auditLog.create({
@@ -268,9 +292,15 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
           },
         });
         if (kind === 'report' && action.type === 'report.status') {
-          const rep = item as unknown as { id: string; title: string; status: string; version?: number },
-            owner = (await db.record.findUnique({ where: { id: rep.id }, select: { owner_id: true } }))
-              ?.owner_id;
+          const rep = item as unknown as {
+              id: string;
+              title: string;
+              status: string;
+              version?: number;
+            },
+            owner = (
+              await db.record.findUnique({ where: { id: rep.id }, select: { owner_id: true } })
+            )?.owner_id;
           if (owner)
             await db.notificationOutbox.createMany({
               data: [
@@ -298,8 +328,14 @@ export async function mutate(db: Db, provided: User, raw: Action | unknown) {
           connected: o.connected,
           source_url: o.sourceUrl || '',
         };
-        await db.organization.upsert({ where: { id: o.id }, create: { id: o.id, ...fields }, update: fields });
-        await db.auditLog.create({ data: { actor_id: user.id, action: action.type, record_id: o.id } });
+        await db.organization.upsert({
+          where: { id: o.id },
+          create: { id: o.id, ...fields },
+          update: fields,
+        });
+        await db.auditLog.create({
+          data: { actor_id: user.id, action: action.type, record_id: o.id },
+        });
       }
   }
   if (action.type === 'notices.read')

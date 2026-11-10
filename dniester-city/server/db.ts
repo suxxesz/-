@@ -14,6 +14,12 @@ export const createPrisma = (connectionString = process.env.DATABASE_URL) =>
 export function isUniqueViolation(e: unknown) {
   if (!(e instanceof Prisma.PrismaClientKnownRequestError)) return false;
   if (e.code === 'P2002') return true;
-  const meta = e.meta as { code?: string; driverAdapterError?: { cause?: { originalCode?: string; kind?: string } } } | undefined;
-  return meta?.code === '23505' || meta?.driverAdapterError?.cause?.originalCode === '23505' || meta?.driverAdapterError?.cause?.kind === 'UniqueConstraintViolation';
+  const meta = e.meta as
+    | { code?: string; driverAdapterError?: { cause?: { originalCode?: string; kind?: string } } }
+    | undefined;
+  return (
+    meta?.code === '23505' ||
+    meta?.driverAdapterError?.cause?.originalCode === '23505' ||
+    meta?.driverAdapterError?.cause?.kind === 'UniqueConstraintViolation'
+  );
 }

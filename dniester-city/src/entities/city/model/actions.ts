@@ -95,7 +95,15 @@ export function applyAction(input: State, raw: Action | unknown, role: Role = 'r
         )
       )
         throw Error('Счётчик не найден для выбранной услуги и адреса.');
-      const err = validateReading(s, p.address, p.category, p.value, p.period, p.meterId, p.confirmed);
+      const err = validateReading(
+        s,
+        p.address,
+        p.category,
+        p.value,
+        p.period,
+        p.meterId,
+        p.confirmed,
+      );
       if (err) throw Error(err);
       const last = s.readings
         .filter(
@@ -159,7 +167,12 @@ export function applyAction(input: State, raw: Action | unknown, role: Role = 'r
       if (p.reportPhoto) r.reportPhoto = p.reportPhoto;
       r.version = (r.version || 1) + 1;
       r.history.push(`${now} · ${p.status}. ${p.comment}`);
-      s.notices.unshift({ id: uid('nt'), text: `Жалоба «${r.title}»: ${p.status}`, read: false, created: now });
+      s.notices.unshift({
+        id: uid('nt'),
+        text: `Жалоба «${r.title}»: ${p.status}`,
+        read: false,
+        created: now,
+      });
       break;
     }
     case 'ticket.reopen': {

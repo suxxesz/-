@@ -17,7 +17,12 @@ const RouteMap = lazy(() => import('@/widgets/map/ui/RouteMap'));
 
 // Минуты от полуночи по времени Молдовы/ПМР — расписание в местном времени, а не в часовом поясе браузера.
 function localMinutes() {
-  const p = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone }).formatToParts(new Date());
+  const p = new Intl.DateTimeFormat('en', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+    timeZone,
+  }).formatToParts(new Date());
   return +p.find((x) => x.type === 'hour')!.value * 60 + +p.find((x) => x.type === 'minute')!.value;
 }
 function useNow() {
@@ -45,8 +50,14 @@ export default function TransportPage() {
 
   return (
     <>
-      <PageHeading title="Транспорт" subtitle="Маршрутки и такси города: когда ближайший рейс, сколько стоит и кому позвонить." />
-      <InfoStrip>Учебные данные: маршруты, интервалы, цены и телефоны условные. В пилоте их публикует диспетчер перевозчика.</InfoStrip>
+      <PageHeading
+        title="Транспорт"
+        subtitle="Маршрутки и такси города: когда ближайший рейс, сколько стоит и кому позвонить."
+      />
+      <InfoStrip>
+        Учебные данные: маршруты, интервалы, цены и телефоны условные. В пилоте их публикует
+        диспетчер перевозчика.
+      </InfoStrip>
       <div className="filter-tabs transport-tabs" role="tablist" aria-label="Вид транспорта">
         {(
           [
@@ -54,7 +65,13 @@ export default function TransportPage() {
             ['taxi', 'Такси', CarTaxiFront],
           ] as const
         ).map(([v, label, Icon]) => (
-          <button key={v} role="tab" aria-selected={tab === v} className={tab === v ? 'active' : ''} onClick={() => setTab(v)}>
+          <button
+            key={v}
+            role="tab"
+            aria-selected={tab === v}
+            className={tab === v ? 'active' : ''}
+            onClick={() => setTab(v)}
+          >
             <Icon size={16} /> {label}
           </button>
         ))}
@@ -62,7 +79,13 @@ export default function TransportPage() {
 
       <AnimatePresence mode="wait">
         {tab === 'routes' ? (
-          <motion.div key="routes" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="transport-layout">
+          <motion.div
+            key="routes"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="transport-layout"
+          >
             <div className="route-list" role="list">
               {routes.map((r) => {
                 const next = nextDeparture(r, now);
@@ -86,7 +109,9 @@ export default function TransportPage() {
                       </small>
                     </span>
                     {next ? (
-                      <Pill tone={next.inMin <= 3 ? 'success' : 'blue'}>{next.inMin === 0 ? 'сейчас' : `через ${next.inMin} мин`}</Pill>
+                      <Pill tone={next.inMin <= 3 ? 'success' : 'blue'}>
+                        {next.inMin === 0 ? 'сейчас' : `через ${next.inMin} мин`}
+                      </Pill>
                     ) : (
                       <Pill>до утра</Pill>
                     )}
@@ -104,7 +129,8 @@ export default function TransportPage() {
                     {selected.from} → {selected.to}
                   </h2>
                   <p>
-                    <Clock size={14} /> {selected.hours[0]}–{selected.hours[1]} · <Wallet size={14} /> {selected.fare} руб.
+                    <Clock size={14} /> {selected.hours[0]}–{selected.hours[1]} ·{' '}
+                    <Wallet size={14} /> {selected.fare} руб.
                   </p>
                 </div>
               </div>
@@ -119,7 +145,12 @@ export default function TransportPage() {
             </section>
           </motion.div>
         ) : (
-          <motion.div key="taxi" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+          <motion.div
+            key="taxi"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+          >
             <section className="panel taxi-calc">
               <h2>
                 <RouteIcon size={18} /> Сколько примерно стоит поездка
@@ -127,7 +158,11 @@ export default function TransportPage() {
               <div className="taxi-calc-row">
                 <label>
                   Откуда
-                  <Select aria-label="Откуда" value={from} onChange={(e) => setFrom(e.target.value)}>
+                  <Select
+                    aria-label="Откуда"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                  >
                     {allStops.map((s) => (
                       <option key={s.name}>{s.name}</option>
                     ))}
@@ -159,7 +194,9 @@ export default function TransportPage() {
                       </span>
                       <div>
                         <h3>{t.name}</h3>
-                        <small>{t.hours === '24/7' ? 'Круглосуточно' : `${t.hours[0]}–${t.hours[1]}`}</small>
+                        <small>
+                          {t.hours === '24/7' ? 'Круглосуточно' : `${t.hours[0]}–${t.hours[1]}`}
+                        </small>
                       </div>
                       {open ? <Pill tone="success">Работает</Pill> : <Pill>Закрыто</Pill>}
                     </div>
@@ -174,7 +211,11 @@ export default function TransportPage() {
                         <Pill key={f}>{f}</Pill>
                       ))}
                     </div>
-                    <a className={'button primary taxi-call' + (open ? '' : ' disabled')} href={open ? `tel:${t.phone.replace(/\s/g, '')}` : undefined} aria-disabled={!open}>
+                    <a
+                      className={'button primary taxi-call' + (open ? '' : ' disabled')}
+                      href={open ? `tel:${t.phone.replace(/\s/g, '')}` : undefined}
+                      aria-disabled={!open}
+                    >
                       <Phone size={16} /> {t.phone}
                     </a>
                   </article>

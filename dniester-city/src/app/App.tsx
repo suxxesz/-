@@ -208,11 +208,18 @@ export default function App() {
             className="theme-toggle"
             aria-label="Сменить тему"
             onClick={() => {
-              applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', currentTheme()[1]);
+              applyTheme(
+                document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark',
+                currentTheme()[1],
+              );
               setThemeTick((n) => n + 1);
             }}
           >
-            {document.documentElement.dataset.theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+            {document.documentElement.dataset.theme === 'dark' ? (
+              <Sun size={19} />
+            ) : (
+              <Moon size={19} />
+            )}
           </button>
           <div className="profile">
             <span className="avatar">{role === 'resident' ? 'Ж' : 'Д'}</span>
