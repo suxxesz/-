@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { PGlite } from '@electric-sql/pglite';
-import { createApp, type AppOptions } from '../server/app';
+import { createApp } from '../server/app';
+import { testDb } from './helpers/db';
 import { demoAddress } from '../src/entities/city/model/demo';
 const bot = 'integration-test-token';
 function signedUser(id: number) {
@@ -24,15 +23,9 @@ function signedUser(id: number) {
   return p.toString();
 }
 test('HTTP login, role revocation, idempotent mutation, draft isolation and publication preview', async () => {
-  const pg = new PGlite();
-  await pg.exec(await readFile(new URL('../server/schema.sql', import.meta.url), 'utf8'));
-  const query = async (sql: string, p?: unknown[]) =>
-    sql.includes('pg_advisory_xact_lock') ? { rows: [] } : pg.query(sql, p);
-  const pool = {
-    query,
-    connect: async () => ({ query, release() {} }),
-  } as unknown as AppOptions['pool'];
-  const app = createApp({ pool, sessionSecret: 't'.repeat(64), botToken: bot, adminIds: ['1'] }),
+  const { pg, prisma, close } = await testDb();
+  const query = (sql: string, p?: unknown[]) => pg.query<any>(sql, p);
+  const app = createApp({ prisma, sessionSecret: 't'.repeat(64), botToken: bot, adminIds: ['1'] }),
     server = app.listen(0, '127.0.0.1');
   await new Promise<void>((r) => server.once('listening', r));
   const port = (server.address() as { port: number }).port,
@@ -170,6 +163,6 @@ test('HTTP login, role revocation, idempotent mutation, draft isolation and publ
     );
   } finally {
     await new Promise<void>((r, j) => server.close((e) => (e ? j(e) : r())));
-    await pg.close();
+    await close();
   }
 });

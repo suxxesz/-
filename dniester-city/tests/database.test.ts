@@ -1,21 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { PGlite } from '@electric-sql/pglite';
-import type { PoolClient } from 'pg';
-import { stateFor, mutate, emptyPrefs, type User } from '../server/store';
+import { stateFor, mutate, emptyPrefs, toUser } from '../server/store';
+import { testDb } from './helpers/db';
 import { demoAddress } from '../src/entities/city/model/demo';
 test('PostgreSQL schema, organization isolation, personal readings and addressed outbox', async () => {
-  const pg = new PGlite();
+  const { pg, prisma, close } = await testDb();
   try {
-    await pg.exec(await readFile(new URL('../server/schema.sql', import.meta.url), 'utf8'));
-    const db = {
-      query: async (sql: string, params?: any[]) => {
-        // PGlite is single-process: the application's advisory lock is unnecessary here.
-        if (sql.includes('pg_advisory_xact_lock')) return { rows: [] };
-        return pg.query(sql, params);
-      },
-    } as PoolClient;
+    // Начальные данные кладём прямым SQL; сам сервер работает через Prisma.
+    const db = { query: (sql: string, params?: any[]) => pg.query<any>(sql, params) };
     const prefs = { ...emptyPrefs(), addresses: [demoAddress], activeAddress: demoAddress };
     for (const [id, role, tid] of [
       ['u1', 'resident', 1],
@@ -45,17 +37,10 @@ test('PostgreSQL schema, organization isolation, personal readings and addressed
     await db.query("UPDATE users SET organization_id='water' WHERE id='water-staff'");
     await db.query("UPDATE users SET organization_id='power' WHERE id='power-staff'");
     const user = async (id: string) =>
-      (await db.query('SELECT * FROM users WHERE id=$1', [id])).rows[0] as User;
+      toUser(await prisma.user.findUniqueOrThrow({ where: { id } }));
     const run = async (id: string, action: any) => {
-      await db.query('BEGIN');
-      try {
-        const result = await mutate(db, await user(id), action);
-        await db.query('COMMIT');
-        return result;
-      } catch (e) {
-        await db.query('ROLLBACK');
-        throw e;
-      }
+      const u = await user(id);
+      return prisma.$transaction((tx) => mutate(tx, u, action));
     };
     const ticketState = await run('u1', {
       type: 'ticket.create',
@@ -69,16 +54,16 @@ test('PostgreSQL schema, organization isolation, personal readings and addressed
     const ticket = ticketState.tickets[0];
     assert.equal(ticketState.tickets.length, 1);
     assert.equal(
-      (await stateFor(db, await user('u2'))).tickets.length,
+      (await stateFor(prisma, await user('u2'))).tickets.length,
       0,
       'another resident cannot read ticket',
     );
     assert.equal(
-      (await stateFor(db, await user('power-staff'))).tickets.length,
+      (await stateFor(prisma, await user('power-staff'))).tickets.length,
       0,
       'another organization cannot read ticket',
     );
-    assert.equal((await stateFor(db, await user('water-staff'))).tickets.length, 1);
+    assert.equal((await stateFor(prisma, await user('water-staff'))).tickets.length, 1);
     await assert.rejects(
       run('power-staff', {
         type: 'ticket.status',
@@ -90,7 +75,7 @@ test('PostgreSQL schema, organization isolation, personal readings and addressed
       type: 'ticket.status',
       payload: { id: ticket.id, status: 'Принята', comment: 'Проверяем' },
     });
-    assert.equal((await stateFor(db, await user('u1'))).tickets[0].status, 'Принята');
+    assert.equal((await stateFor(prisma, await user('u1'))).tickets[0].status, 'Принята');
     await run('u1', {
       type: 'reading.create',
       payload: { address: demoAddress, category: 'water', value: 180, period: '2026-10' },
@@ -99,7 +84,7 @@ test('PostgreSQL schema, organization isolation, personal readings and addressed
       type: 'reading.create',
       payload: { address: demoAddress, category: 'water', value: 280, period: '2026-10' },
     });
-    assert.equal((await stateFor(db, await user('u1'))).readings[0].value, 180);
+    assert.equal((await stateFor(prisma, await user('u1'))).readings[0].value, 180);
     await assert.rejects(
       run('u1', {
         type: 'reading.create',
@@ -139,10 +124,10 @@ test('PostgreSQL schema, organization isolation, personal readings and addressed
     assert.equal(n.rows.length, 4);
     assert.ok(n.rows.some((x) => x.user_id === 'u1'));
     assert.ok(!n.rows.some((x) => x.user_id === 'u2'));
-    assert.equal((await stateFor(db, await user('u1'))).events.length, 1);
+    assert.equal((await stateFor(prisma, await user('u1'))).events.length, 1);
     const audit = await db.query('SELECT * FROM audit_log');
     assert.ok(audit.rows.length >= 5);
   } finally {
-    await pg.close();
+    await close();
   }
 });

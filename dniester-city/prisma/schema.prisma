@@ -1,0 +1,106 @@
+// Схема БД DniesterCity. Источник правды — этот файл + SQL миграций в prisma/migrations.
+// Имена полей совпадают с колонками (snake_case), чтобы сервер и SQL читались одинаково.
+// Что Prisma не описывает (CHECK, GIN, уникальный индекс по выражениям jsonb) — в SQL миграции 0_init.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../server/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id         String   @id
+  name       String
+  categories Json     @default("[]")
+  addresses  Json     @default("[]")
+  connected  Boolean  @default(false)
+  source_url String   @default("")
+  users      User[]
+  records    Record[]
+
+  @@map("organizations")
+}
+
+model User {
+  id              String              @id
+  telegram_id     BigInt              @unique
+  name            String
+  /// resident | dispatcher | admin (CHECK в миграции)
+  role            String              @default("resident")
+  organization_id String?
+  prefs           Json
+  created_at      DateTime            @default(now()) @db.Timestamptz(6)
+  organization    Organization?       @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  records         Record[]
+  receipts        MutationReceipt[]
+  audit           AuditLog[]
+  notifications   NotificationOutbox[]
+
+  @@map("users")
+}
+
+model Record {
+  id              String        @id
+  /// event | ticket | reading | schedule | meter | report (CHECK в миграции)
+  kind            String
+  owner_id        String?
+  organization_id String?
+  data            Json
+  updated_at      DateTime      @default(now()) @db.Timestamptz(6)
+  owner           User?         @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([owner_id, kind], map: "records_owner_kind")
+  @@index([organization_id, kind], map: "records_org_kind")
+  @@map("records")
+}
+
+model MutationReceipt {
+  user_id    String
+  request_id String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([user_id, request_id])
+  @@map("mutation_receipts")
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  actor_id   String?
+  action     String
+  record_id  String?
+  details    Json     @default("{}")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  actor      User?    @relation(fields: [actor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("audit_log")
+}
+
+model NotificationOutbox {
+  id              BigInt   @id @default(autoincrement())
+  user_id         String
+  dedupe_key      String   @unique
+  text            String
+  status          String   @default("pending")
+  attempts        Int      @default(0)
+  next_attempt_at DateTime @default(now()) @db.Timestamptz(6)
+  read            Boolean  @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz(6)
+  lease_token     String?  @db.Uuid
+  user            User     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([status, next_attempt_at], map: "outbox_due")
+  @@map("notification_outbox")
+}
+
+model BotState {
+  key   String @id
+  value String
+
+  @@map("bot_state")
+}

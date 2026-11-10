@@ -13,6 +13,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/build ./build
 COPY --from=build /app/dist ./dist
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 USER node
 EXPOSE 3001
-CMD ["node","build/server/index.mjs"]
+# Сначала догоняем схему миграциями Prisma, затем запускаем API.
+CMD ["sh","-c","npx prisma migrate deploy && node build/server/index.mjs"]

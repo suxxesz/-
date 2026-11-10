@@ -1,5 +1,4 @@
 import { build } from 'esbuild';
-import { copyFile, mkdir } from 'node:fs/promises';
 await build({
   entryPoints: ['server/index.ts', 'server/bot.ts', 'server/setup.ts', 'server/provision.ts'],
   bundle: true,
@@ -12,5 +11,4 @@ await build({
   sourcemap: true,
   logLevel: 'info',
 });
-await mkdir('build/server', { recursive: true });
-await copyFile('server/schema.sql', 'build/server/schema.sql');
+// Prisma Client из server/generated входит в бандл; схему применяет `prisma migrate deploy`.

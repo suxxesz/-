@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import { PGlite } from '@electric-sql/pglite';
+import { migrationSql } from './helpers/db';
 test('v0.1 histories migrate to separate personal meters and repeated setup is safe', async () => {
   const pg = new PGlite(),
-    schema = await readFile(new URL('../server/schema.sql', import.meta.url), 'utf8');
+    [init, legacy] = await migrationSql();
   try {
-    await pg.exec(schema);
+    // База «как у v0.1»: только схема, показания без счётчиков.
+    await pg.exec(init.sql);
     await pg.query(
       "INSERT INTO users(id,telegram_id,name,prefs) VALUES('u1',1,'Первый','{}'),('u2',2,'Второй','{}')",
     );
@@ -31,8 +32,9 @@ test('v0.1 histories migrate to separate personal meters and repeated setup is s
         }),
       ]);
     }
-    await pg.exec(schema);
-    await pg.exec(schema);
+    // Миграция переноса идемпотентна: повторный прогон ничего не дублирует.
+    await pg.exec(legacy.sql);
+    await pg.exec(legacy.sql);
     const meters = await pg.query<{ owner_id: string; data: { initialValue: number; id: string } }>(
       "SELECT * FROM records WHERE kind='meter'",
     );

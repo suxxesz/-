@@ -4,13 +4,13 @@ import { z } from 'zod';
 import { categories } from '../src/entities/city/model/types';
 import { fileName, uploadDir } from './files';
 import { resolve } from 'node:path';
-import type { Pool, PoolClient } from 'pg';
+import { Prisma, isUniqueViolation, type Db, type PrismaClient } from './db';
 import { verifyTelegram, readSession, signSession } from './auth';
-import { emptyPrefs, stateFor, mutate, type User } from './store';
+import { emptyPrefs, stateFor, mutate, toUser, type User } from './store';
 import { parseAction } from '../src/entities/city/model/contracts';
 import { applyAction } from '../src/entities/city/model/actions';
 export type AppOptions = {
-  pool: Pick<Pool, 'query' | 'connect'>;
+  prisma: PrismaClient;
   sessionSecret: string;
   botToken: string;
   adminIds: string[];
@@ -18,7 +18,7 @@ export type AppOptions = {
   integrationKey?: string;
 };
 export function createApp(options: AppOptions) {
-  const { pool, sessionSecret: secret } = options;
+  const { prisma, sessionSecret: secret } = options;
   if (secret.length < 32) throw Error('SESSION_SECRET должен содержать минимум 32 символа.');
   const app = express();
   app.disable('x-powered-by');
@@ -50,7 +50,7 @@ export function createApp(options: AppOptions) {
   });
   app.get('/api/health', async (_req, res) => {
     try {
-      await pool.query('SELECT 1');
+      await prisma.$queryRaw`SELECT 1`;
       res.json({ ok: true });
     } catch {
       res.status(503).json({ ok: false });
@@ -61,17 +61,18 @@ export function createApp(options: AppOptions) {
       if (typeof req.body?.initData !== 'string') throw Error('Нужны данные Telegram.');
       const tg = verifyTelegram(req.body.initData, options.botToken),
         admin = options.adminIds.includes(String(tg.id));
-      const { rows } = await pool.query(
-        'INSERT INTO users(id,telegram_id,name,role,prefs) VALUES($1,$2,$3,$4,$5) ON CONFLICT(telegram_id) DO UPDATE SET name=EXCLUDED.name RETURNING *',
-        [
-          `tg-${tg.id}`,
-          tg.id,
-          tg.first_name || 'Житель',
-          admin ? 'admin' : 'resident',
-          JSON.stringify(emptyPrefs()),
-        ],
-      );
-      res.json({ token: signSession(rows[0].id, secret), role: rows[0].role });
+      const user = await prisma.user.upsert({
+        where: { telegram_id: BigInt(tg.id) },
+        create: {
+          id: `tg-${tg.id}`,
+          telegram_id: BigInt(tg.id),
+          name: tg.first_name || 'Житель',
+          role: admin ? 'admin' : 'resident',
+          prefs: emptyPrefs(),
+        },
+        update: { name: tg.first_name || 'Житель' },
+      });
+      res.json({ token: signSession(user.id, secret), role: user.role });
     } catch {
       res
         .status(401)
@@ -81,25 +82,21 @@ export function createApp(options: AppOptions) {
   app.use('/api', async (req, res, next) => {
     try {
       const id = readSession((req.headers.authorization || '').replace(/^Bearer /, ''), secret),
-        user = (await pool.query('SELECT * FROM users WHERE id=$1', [id])).rows[0];
-      if (!user) throw Error('Пользователь не найден.');
-      res.locals.user = user;
+        row = await prisma.user.findUnique({ where: { id } });
+      if (!row) throw Error('Пользователь не найден.');
+      res.locals.user = toUser(row);
       next();
     } catch {
       res.status(401).json({ error: 'Требуется вход через Telegram.' });
     }
   });
   const withDb =
-    (handler: (db: PoolClient, req: express.Request, res: express.Response) => Promise<void>) =>
+    (handler: (db: Db, req: express.Request, res: express.Response) => Promise<void>) =>
     async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-      let db: PoolClient | undefined;
       try {
-        db = await pool.connect();
-        await handler(db, req, res);
+        await handler(prisma, req, res);
       } catch (e) {
         next(e);
-      } finally {
-        db?.release();
       }
     };
   const outages = z
@@ -140,7 +137,7 @@ export function createApp(options: AppOptions) {
       return;
     }
     const { organizationId, items } = parsed.data,
-      org = (await pool.query('SELECT name FROM organizations WHERE id=$1', [organizationId])).rows[0];
+      org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } });
     if (!org) {
       res.status(404).json({ error: 'Организация не найдена.' });
       return;
@@ -155,11 +152,11 @@ export function createApp(options: AppOptions) {
           source: org.name, sourceUrl: i.sourceUrl, updated: now, version: 1,
           history: [`${now} · Черновик получен по API организации`],
         },
-        r = await pool.query(
-          "INSERT INTO records(id,kind,owner_id,organization_id,data) VALUES($1,'event',NULL,$2,$3) ON CONFLICT(id) DO NOTHING",
-          [id, organizationId, JSON.stringify(data)],
-        );
-      created += r.rowCount || 0;
+        r = await prisma.record.createMany({
+          data: [{ id, kind: 'event', owner_id: null, organization_id: organizationId, data: JSON.parse(JSON.stringify(data)) }],
+          skipDuplicates: true,
+        });
+      created += r.count;
     }
     res.json({ created, duplicates: items.length - created });
   });
@@ -179,23 +176,27 @@ export function createApp(options: AppOptions) {
   );
   app.post(
     '/api/action',
-    withDb(async (db, req, res) => {
+    withDb(async (_db, req, res) => {
       try {
-        await db.query('BEGIN');
-        const result = await mutate(db, res.locals.user as User, req.body);
-        await db.query('COMMIT');
+        // Вся мутация — одна транзакция: при любой ошибке Prisma откатывает её целиком.
+        const result = await prisma.$transaction((tx) => mutate(tx, res.locals.user as User, req.body), {
+          timeout: 15_000,
+        });
         res.json(result);
       } catch (e) {
-        await db.query('ROLLBACK');
-        const error = e as Error & { code?: string };
-        if (error.code) {
-          if (error.code === '23505') {
-            res.status(409).json({ error: 'Эта запись уже существует. Обновите данные.' });
-            return;
-          }
-          throw e;
+        if (isUniqueViolation(e)) {
+          res.status(409).json({ error: 'Эта запись уже существует. Обновите данные.' });
+          return;
         }
-        res.status(400).json({ error: error.message });
+        // Сбои базы — в общий обработчик (503); ошибки бизнес-правил — 400 с текстом.
+        if (
+          e instanceof Prisma.PrismaClientKnownRequestError ||
+          e instanceof Prisma.PrismaClientUnknownRequestError ||
+          e instanceof Prisma.PrismaClientInitializationError ||
+          e instanceof Prisma.PrismaClientRustPanicError
+        )
+          throw e;
+        res.status(400).json({ error: (e as Error).message });
       }
     }),
   );
@@ -230,10 +231,9 @@ export function createApp(options: AppOptions) {
         res.status(400).json({ error: (e as Error).message });
         return;
       }
-      const { rows } = await db.query(
-        "SELECT prefs FROM users WHERE prefs->'addresses' ?| $1::text[]",
-        [p.addresses],
-      );
+      const rows = await db.$queryRaw<
+        { prefs: User['prefs'] }[]
+      >`SELECT prefs FROM users WHERE prefs->'addresses' ?| ${p.addresses}::text[]`;
       const recipientCount = rows.filter((u) =>
         u.prefs.addresses.some(
           (a: string) =>

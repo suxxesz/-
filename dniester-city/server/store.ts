@@ -1,4 +1,4 @@
-import type { PoolClient } from 'pg';
+import { Prisma, type Db } from './db';
 import { persistMedia } from './files';
 import {
   type State,
@@ -45,16 +45,30 @@ const organizationFromRow = (r: Record<string, unknown>): Organization => ({
   connected: Boolean(r.connected),
   sourceUrl: String(r.source_url || ''),
 });
-async function organizationsFor(db: PoolClient, user: User): Promise<Organization[]> {
-  const sql =
+/** Строка users из Prisma → User сервера (telegram_id приходит как bigint). */
+export const toUser = (r: {
+  id: string;
+  telegram_id: bigint | string | number;
+  name: string;
+  role: string;
+  organization_id: string | null;
+  prefs: unknown;
+}): User => ({
+  id: r.id,
+  telegram_id: String(r.telegram_id),
+  name: r.name,
+  role: r.role as Role,
+  organization_id: r.organization_id,
+  prefs: r.prefs as User['prefs'],
+});
+const json = (v: unknown) => JSON.parse(JSON.stringify(v)) as Prisma.InputJsonValue;
+async function organizationsFor(db: Db, user: User): Promise<Organization[]> {
+  // Оператор jsonb ?| («есть хоть один из адресов») Prisma не выражает — типобезопасный $queryRaw.
+  const rows =
     user.role === 'admin'
-      ? 'SELECT * FROM organizations ORDER BY name'
-      : 'SELECT * FROM organizations WHERE id=$1 OR addresses ?| $2::text[] ORDER BY name';
-  const { rows } = await db.query(
-    sql,
-    user.role === 'admin' ? [] : [user.organization_id, user.prefs.addresses],
-  );
-  return rows.map(organizationFromRow);
+      ? await db.organization.findMany({ orderBy: { name: 'asc' } })
+      : await db.$queryRaw<Record<string, unknown>[]>`SELECT * FROM organizations WHERE id=${user.organization_id} OR addresses ?| ${user.prefs.addresses}::text[] ORDER BY name`;
+  return rows.map((r) => organizationFromRow(r as Record<string, unknown>));
 }
 export function canManage(
   user: User,
@@ -70,27 +84,17 @@ export function canManage(
     addresses.every((a) => organization.addresses.includes(a))
   );
 }
-export async function stateFor(db: PoolClient, user: User): Promise<State> {
+export async function stateFor(db: Db, user: User): Promise<State> {
   const organizations = await organizationsFor(db, user),
     org = organizations.find((o) => o.id === user.organization_id);
   const staff = user.role !== 'resident';
   // Filter at the database boundary: personal records, public address events, or assigned staff records.
-  const { rows: records } = await db.query<RecordRow>(
-    `SELECT id,kind,owner_id,organization_id,data FROM records WHERE
-  owner_id=$1 OR
-  (kind IN ('event','schedule') AND COALESCE(data->>'status','')<>'Черновик' AND ((data->'addresses') ?| $2::text[] OR $6::jsonb ? (data->>'address'))) OR
-  $3::boolean OR
-  ($4::boolean AND organization_id=$5)
-  ORDER BY updated_at DESC,id`,
-    [
-      user.id,
-      user.prefs.addresses,
-      user.role === 'admin',
-      user.role === 'dispatcher',
-      user.organization_id,
-      JSON.stringify(user.prefs.addresses),
-    ],
-  );
+  const records = await db.$queryRaw<RecordRow[]>`SELECT id,kind,owner_id,organization_id,data FROM records WHERE
+  owner_id=${user.id} OR
+  (kind IN ('event','schedule') AND COALESCE(data->>'status','')<>'Черновик' AND ((data->'addresses') ?| ${user.prefs.addresses}::text[] OR ${JSON.stringify(user.prefs.addresses)}::jsonb ? (data->>'address'))) OR
+  ${user.role === 'admin'}::boolean OR
+  (${user.role === 'dispatcher'}::boolean AND organization_id=${user.organization_id})
+  ORDER BY updated_at DESC,id`;
   const visible = records.filter((r) => {
     if (staff && canManage(user, org, r)) return true;
     if (r.kind === 'report') return true;
@@ -107,11 +111,13 @@ export async function stateFor(db: PoolClient, user: User): Promise<State> {
     ? user.prefs.activeAddress
     : addresses[0] || '';
   const notices = (
-    await db.query(
-      'SELECT id,text,read,created_at FROM notification_outbox WHERE user_id=$1 ORDER BY id DESC LIMIT 100',
-      [user.id],
-    )
-  ).rows.map((n) => ({
+    await db.notificationOutbox.findMany({
+      where: { user_id: user.id },
+      select: { id: true, text: true, read: true, created_at: true },
+      orderBy: { id: 'desc' },
+      take: 100,
+    })
+  ).map((n) => ({
     id: String(n.id),
     text: n.text,
     read: n.read,
@@ -132,22 +138,23 @@ export async function stateFor(db: PoolClient, user: User): Promise<State> {
     notices,
   };
 }
-export async function mutate(db: PoolClient, provided: User, raw: Action | unknown) {
+export async function mutate(db: Db, provided: User, raw: Action | unknown) {
   const action = parseAction(raw);
-  const user: User = (await db.query('SELECT * FROM users WHERE id=$1 FOR UPDATE', [provided.id]))
-    .rows[0];
-  if (!user) throw Error('Пользователь не найден.');
+  // Блокировка строки пользователя на время транзакции — FOR UPDATE есть только в сыром SQL.
+  const locked = (
+    await db.$queryRaw<Parameters<typeof toUser>[0][]>`SELECT * FROM users WHERE id=${provided.id} FOR UPDATE`
+  )[0];
+  if (!locked) throw Error('Пользователь не найден.');
+  const user = toUser(locked);
   if (
     action.requestId &&
-    (
-      await db.query('SELECT 1 FROM mutation_receipts WHERE user_id=$1 AND request_id=$2', [
-        user.id,
-        action.requestId,
-      ])
-    ).rows.length
+    (await db.mutationReceipt.findUnique({
+      where: { user_id_request_id: { user_id: user.id, request_id: action.requestId } },
+    }))
   )
     return stateFor(db, user);
-  if (action.type === 'organization.save') await db.query('SELECT pg_advisory_xact_lock(421902)');
+  if (action.type === 'organization.save')
+    await db.$queryRaw`SELECT 1 FROM (SELECT pg_advisory_xact_lock(421902)) AS lock`;
   const organizations = await organizationsFor(db, user),
     org = organizations.find((o) => o.id === user.organization_id);
   const p = action.payload;
@@ -158,9 +165,7 @@ export async function mutate(db: PoolClient, provided: User, raw: Action | unkno
       action.type,
     )
   ) {
-    const record = (
-      await db.query<RecordRow>('SELECT * FROM records WHERE id=$1 FOR UPDATE', [p.id])
-    ).rows[0];
+    const record = (await db.$queryRaw<RecordRow[]>`SELECT * FROM records WHERE id=${p.id} FOR UPDATE`)[0];
     const expectedKind = action.type.startsWith('ticket.')
       ? 'ticket'
       : action.type.startsWith('report.')
@@ -187,11 +192,7 @@ export async function mutate(db: PoolClient, provided: User, raw: Action | unkno
     if (org) values.source = org.name;
   }
   if (action.type === 'reading.create' && action.payload.meterId) {
-    const meter = (
-      await db.query<RecordRow>("SELECT * FROM records WHERE id=$1 AND kind='meter'", [
-        action.payload.meterId,
-      ])
-    ).rows[0];
+    const meter = await db.record.findFirst({ where: { id: action.payload.meterId, kind: 'meter' } });
     if (!meter || meter.owner_id !== user.id) throw Error('Нет доступа к счётчику.');
   }
   const before = await stateFor(db, user);
@@ -205,10 +206,9 @@ export async function mutate(db: PoolClient, provided: User, raw: Action | unkno
     };
   }
   if (['reading.create', 'meter.create'].includes(action.type)) {
-    const { rows } = await db.query<RecordRow>(
-      "SELECT * FROM records WHERE owner_id=$1 AND kind IN ('reading','meter')",
-      [user.id],
-    );
+    const rows = await db.record.findMany({
+      where: { owner_id: user.id, kind: { in: ['reading', 'meter'] } },
+    });
     domainState = {
       ...before,
       readings: rows
@@ -251,30 +251,37 @@ export async function mutate(db: PoolClient, provided: User, raw: Action | unkno
           r.reportPhoto = await persistMedia(r.reportPhoto);
         }
         const organizationId = kind === 'event' && org ? org.id : matches[0]?.id || null;
-        await db.query(
-          'INSERT INTO records(id,kind,owner_id,organization_id,data) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data,organization_id=EXCLUDED.organization_id,updated_at=now()',
-          [item.id, kind, user.id, organizationId, JSON.stringify(item)],
-        );
-        await db.query(
-          'INSERT INTO audit_log(actor_id,action,record_id,details) VALUES($1,$2,$3,$4)',
-          [
-            user.id,
-            action.type,
-            item.id,
-            JSON.stringify({
+        await db.record.upsert({
+          where: { id: item.id },
+          create: { id: item.id, kind, owner_id: user.id, organization_id: organizationId, data: json(item) },
+          update: { data: json(item), organization_id: organizationId, updated_at: new Date() },
+        });
+        await db.auditLog.create({
+          data: {
+            actor_id: user.id,
+            action: action.type,
+            record_id: item.id,
+            details: json({
               version: 'version' in item ? item.version : undefined,
               requestId: action.requestId,
             }),
-          ],
-        );
+          },
+        });
         if (kind === 'report' && action.type === 'report.status') {
           const rep = item as unknown as { id: string; title: string; status: string; version?: number },
-            owner = (await db.query('SELECT owner_id FROM records WHERE id=$1', [rep.id])).rows[0]?.owner_id;
+            owner = (await db.record.findUnique({ where: { id: rep.id }, select: { owner_id: true } }))
+              ?.owner_id;
           if (owner)
-            await db.query(
-              'INSERT INTO notification_outbox(user_id,dedupe_key,text) VALUES($1,$2,$3) ON CONFLICT(dedupe_key) DO NOTHING',
-              [owner, `${rep.id}:v${rep.version || 1}:${owner}`, `DniesterCity: жалоба «${rep.title}» — ${rep.status}`],
-            );
+            await db.notificationOutbox.createMany({
+              data: [
+                {
+                  user_id: owner,
+                  dedupe_key: `${rep.id}:v${rep.version || 1}:${owner}`,
+                  text: `DniesterCity: жалоба «${rep.title}» — ${rep.status}`,
+                },
+              ],
+              skipDuplicates: true,
+            });
         }
         if (kind === 'event' && (item as CityEvent).status !== 'Черновик')
           await notifyEvent(db, item as CityEvent);
@@ -284,55 +291,45 @@ export async function mutate(db: PoolClient, provided: User, raw: Action | unkno
     const old = new Map(before.organizations.map((o) => [o.id, JSON.stringify(o)]));
     for (const o of after.organizations)
       if (old.get(o.id) !== JSON.stringify(o)) {
-        await db.query(
-          'INSERT INTO organizations(id,name,categories,addresses,connected,source_url) VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT(id) DO UPDATE SET name=EXCLUDED.name,categories=EXCLUDED.categories,addresses=EXCLUDED.addresses,connected=EXCLUDED.connected,source_url=EXCLUDED.source_url',
-          [
-            o.id,
-            o.name,
-            JSON.stringify(o.categories),
-            JSON.stringify(o.addresses),
-            o.connected,
-            o.sourceUrl || '',
-          ],
-        );
-        await db.query('INSERT INTO audit_log(actor_id,action,record_id) VALUES($1,$2,$3)', [
-          user.id,
-          action.type,
-          o.id,
-        ]);
+        const fields = {
+          name: o.name,
+          categories: json(o.categories),
+          addresses: json(o.addresses),
+          connected: o.connected,
+          source_url: o.sourceUrl || '',
+        };
+        await db.organization.upsert({ where: { id: o.id }, create: { id: o.id, ...fields }, update: fields });
+        await db.auditLog.create({ data: { actor_id: user.id, action: action.type, record_id: o.id } });
       }
   }
   if (action.type === 'notices.read')
-    await db.query('UPDATE notification_outbox SET read=true WHERE user_id=$1', [user.id]);
+    await db.notificationOutbox.updateMany({ where: { user_id: user.id }, data: { read: true } });
   if (['address.add', 'address.select', 'subscriptions'].includes(action.type)) {
     // Never persist an organization's derived service area as a user's private subscriptions.
     const personalAddresses =
       action.type === 'address.add'
         ? [...user.prefs.addresses, action.payload.address]
         : user.prefs.addresses;
-    await db.query('UPDATE users SET prefs=$2 WHERE id=$1', [
-      user.id,
-      JSON.stringify({
-        addresses: personalAddresses,
-        activeAddress: after.activeAddress,
-        subscriptions: after.subscriptions,
-        subscriptionsByAddress: after.subscriptionsByAddress || {},
-      }),
-    ]);
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        prefs: json({
+          addresses: personalAddresses,
+          activeAddress: after.activeAddress,
+          subscriptions: after.subscriptions,
+          subscriptionsByAddress: after.subscriptionsByAddress || {},
+        }),
+      },
+    });
   }
   if (action.requestId)
-    await db.query('INSERT INTO mutation_receipts(user_id,request_id) VALUES($1,$2)', [
-      user.id,
-      action.requestId,
-    ]);
-  return stateFor(db, (await db.query('SELECT * FROM users WHERE id=$1', [user.id])).rows[0]);
+    await db.mutationReceipt.create({ data: { user_id: user.id, request_id: action.requestId } });
+  return stateFor(db, toUser(await db.user.findUniqueOrThrow({ where: { id: user.id } })));
 }
-async function notifyEvent(db: PoolClient, event: CityEvent) {
-  const users = (
-    await db.query("SELECT id,prefs FROM users WHERE prefs->'addresses' ?| $1::text[]", [
-      event.addresses,
-    ])
-  ).rows;
+async function notifyEvent(db: Db, event: CityEvent) {
+  const users = await db.$queryRaw<
+    { id: string; prefs: User['prefs'] }[]
+  >`SELECT id,prefs FROM users WHERE prefs->'addresses' ?| ${event.addresses}::text[]`;
   for (const u of users) {
     if (
       !u.prefs.addresses.some(
@@ -343,9 +340,9 @@ async function notifyEvent(db: PoolClient, event: CityEvent) {
     )
       continue;
     const text = `DniesterCity: ${event.title}\n${event.status}\n${event.addresses.join('; ')}\nНачало: ${event.start}\nОкончание: ${event.end || 'срок неизвестен'}\n${event.description}\nИсточник: ${event.source}`;
-    await db.query(
-      'INSERT INTO notification_outbox(user_id,dedupe_key,text) VALUES($1,$2,$3) ON CONFLICT(dedupe_key) DO NOTHING',
-      [u.id, `${event.id}:v${event.version || 1}:${u.id}`, text],
-    );
+    await db.notificationOutbox.createMany({
+      data: [{ user_id: u.id, dedupe_key: `${event.id}:v${event.version || 1}:${u.id}`, text }],
+      skipDuplicates: true,
+    });
   }
 }

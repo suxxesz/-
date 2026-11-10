@@ -1,17 +1,17 @@
 import 'dotenv/config';
-import { pool } from './db';
+import { createPrisma } from './db';
 import { createTelegramClient, type TelegramUpdate } from './telegram';
 import { deliverOne } from './outbox';
 const token = process.env.BOT_TOKEN,
   url = process.env.MINI_APP_URL;
 if (!token || !url?.startsWith('https://')) throw Error('Укажите BOT_TOKEN и HTTPS MINI_APP_URL.');
 const telegram = createTelegramClient(token);
+const prisma = createPrisma();
 let running = true;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function poll() {
   let offset = Number(
-    (await pool.query("SELECT value FROM bot_state WHERE key='telegram_offset'")).rows[0]?.value ||
-      0,
+    (await prisma.botState.findUnique({ where: { key: 'telegram_offset' } }))?.value || 0,
   );
   while (running) {
     try {
@@ -31,10 +31,11 @@ async function poll() {
             },
           });
         offset = update.update_id + 1;
-        await pool.query(
-          "INSERT INTO bot_state(key,value) VALUES('telegram_offset',$1) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value",
-          [String(offset)],
-        );
+        await prisma.botState.upsert({
+          where: { key: 'telegram_offset' },
+          create: { key: 'telegram_offset', value: String(offset) },
+          update: { value: String(offset) },
+        });
       }
     } catch {
       console.error('Telegram или база недоступны. Повтор через 5 секунд.');
@@ -45,7 +46,7 @@ async function poll() {
 async function outbox() {
   while (running) {
     try {
-      const processed = await deliverOne(pool, (chatId, text) =>
+      const processed = await deliverOne(prisma, (chatId, text) =>
         telegram('sendMessage', { chat_id: chatId, text }),
       );
       await sleep(processed ? 300 : 1500);
@@ -62,4 +63,4 @@ process.on('SIGINT', () => {
   running = false;
 });
 await Promise.all([poll(), outbox()]);
-await pool.end();
+await prisma.$disconnect();

@@ -1,18 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PGlite } from '@electric-sql/pglite';
-import { readFile } from 'node:fs/promises';
 import { deliverOne, retryDecision } from '../server/outbox';
 import { createTelegramClient, TelegramError } from '../server/telegram';
-import { type AppOptions } from '../server/app';
+import { testDb } from './helpers/db';
 test('outbox uses a committed lease, retries rate limits and terminates blocked recipients', async () => {
-  const pg = new PGlite();
-  await pg.exec(await readFile(new URL('../server/schema.sql', import.meta.url), 'utf8'));
+  const { pg, prisma: pool, close } = await testDb();
   const query = (sql: string, p?: unknown[]) => pg.query<Record<string, unknown>>(sql, p);
-  const pool = {
-    query,
-    connect: async () => ({ query, release() {} }),
-  } as unknown as AppOptions['pool'];
   try {
     await query("INSERT INTO users(id,telegram_id,name,prefs) VALUES('u',1,'Тест','{}')");
     await query(
@@ -58,7 +51,7 @@ test('outbox uses a committed lease, retries rate limits and terminates blocked 
     );
     assert.equal(retryDecision(Error('network'), 8).status, 'failed');
   } finally {
-    await pg.close();
+    await close();
   }
 });
 test('Telegram client reads retry_after without exposing API credentials in errors', async () => {

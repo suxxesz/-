@@ -6,3 +6,4 @@ dist/
 *.tar.gz
 build/
 playwright-report/
+server/generated/
