@@ -23,6 +23,7 @@ import {
   WifiOff,
   CheckCircle2,
   AlertCircle,
+  Bus,
 } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
 import Logo from '@/shared/ui/Logo';
@@ -41,7 +42,8 @@ const Events = lazy(() => import('@/pages/events')),
   Organizations = lazy(() => import('@/pages/organizations')),
   SettingsPage = lazy(() => import('@/pages/settings')),
   Dispatcher = lazy(() => import('@/pages/dispatcher')),
-  Pitch = lazy(() => import('@/pages/pitch'));
+  Pitch = lazy(() => import('@/pages/pitch')),
+  Transport = lazy(() => import('@/pages/transport'));
 const nav = [
   ['home', 'Обзор', LayoutDashboard],
   ['events', 'Отключения и работы', Zap],
@@ -49,6 +51,7 @@ const nav = [
   ['tickets', 'Мои заявки', MessageSquare],
   ['complaints', 'Книга жалоб', MapPin],
   ['schedule', 'Графики обслуживания', CalendarDays],
+  ['transport', 'Транспорт', Bus],
   ['contacts', 'Организации', Contact],
 ] as const;
 export default function App() {
@@ -114,6 +117,7 @@ export default function App() {
     complaints: <Complaints />,
     schedule: <Schedule />,
     contacts: <Organizations />,
+    transport: <Transport />,
     settings: <SettingsPage />,
     admin: <Dispatcher />,
     pitch: <Pitch />,

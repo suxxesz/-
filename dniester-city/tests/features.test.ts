@@ -203,3 +203,15 @@ test('wall time is stored as UTC using the Chisinau seasonal offset', () => {
   assert.throws(() => eventTime('2026-03-29T02:30'), /не существует/);
   assert.equal(eventTime('2026-03-29T03:30'), '2026-03-29T00:30:00.000Z');
 });
+test('transport: next minibus, taxi estimate and night hours', async () => {
+  const { routes, taxis, nextDeparture, taxiEstimate, taxiOpen } = await import('../src/entities/transport/model/data');
+  const r = { ...routes[0], hours: ['06:00', '22:30'] as [string, string], intervalMin: 7 };
+  assert.deepEqual(nextDeparture(r, 5 * 60), { inMin: 60, at: '06:00' });
+  assert.deepEqual(nextDeparture(r, 6 * 60 + 1), { inMin: 6, at: '06:07' });
+  assert.equal(nextDeparture(r, 23 * 60), null);
+  assert.equal(taxiEstimate({ ...taxis[0], minFare: 20, perKm: 4 }, 0), 20);
+  assert.equal(taxiEstimate({ ...taxis[0], minFare: 20, perKm: 4 }, 10), 72);
+  const night = { ...taxis[0], hours: ['06:00', '00:00'] as [string, string] };
+  assert.equal(taxiOpen(night, 23 * 60 + 59), true);
+  assert.equal(taxiOpen(night, 3 * 60), false);
+});

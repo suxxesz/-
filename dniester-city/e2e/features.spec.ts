@@ -119,3 +119,14 @@ test('accessibility on overview and meter dialog', async ({ page }) => {
     [],
   );
 });
+test('transport: route on map and taxi estimate', async ({ page }) => {
+  await page.goto('/#transport');
+  await expect(page.getByRole('heading', { name: 'Транспорт' })).toBeVisible();
+  await page.getByRole('listitem').filter({ hasText: 'Тирасполь → Бендеры' }).click();
+  await expect(page.getByRole('heading', { name: 'Тирасполь → Бендеры' })).toBeVisible();
+  await expect(page.locator('.route-map .leaflet-interactive').first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Такси' }).click();
+  await choose(page, { label: 'Куда' }, 'Бендеры, центр');
+  await expect(page.locator('.taxi-km strong')).toContainText('км');
+  await expect(page.locator('.taxi-card').first()).toBeVisible();
+});

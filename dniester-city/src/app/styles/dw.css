@@ -117,3 +117,65 @@ button.secondary, .chip { background: var(--surface); color: var(--ink); border:
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+/* Транспорт */
+.transport-tabs { margin: 18px 0 16px; }
+.transport-tabs button { display: inline-flex; align-items: center; gap: 7px; }
+.transport-layout { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 18px; align-items: start; }
+.route-list { display: grid; gap: 10px; }
+.route-card {
+  display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow);
+  transition: border-color .15s, transform .2s, box-shadow .2s;
+}
+.route-card:hover { transform: translateY(-1px); border-color: var(--line-strong); }
+.route-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.route-number {
+  display: grid; place-items: center; min-width: 40px; height: 40px; padding: 0 8px; border-radius: 12px;
+  color: #fff; font: 800 16px var(--font-display);
+}
+.route-number.big { min-width: 52px; height: 52px; font-size: 22px; border-radius: 16px; }
+.route-main { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.route-main strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-main small { color: var(--muted); }
+.route-detail { padding: 18px; display: grid; gap: 14px; }
+.route-detail-head { display: flex; gap: 14px; align-items: center; }
+.route-detail-head p { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.route-map { height: 320px; }
+.stop-line { list-style: none; margin: 0; padding: 0 0 0 6px; display: grid; gap: 0; }
+.stop-line li { position: relative; padding: 7px 0 7px 24px; font-size: 13.5px; }
+.stop-line li::before { content: ''; position: absolute; left: 0; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; border: 3px solid var(--route); background: var(--surface); box-sizing: border-box; z-index: 1; }
+.stop-line li::after { content: ''; position: absolute; left: 4.5px; top: 0; bottom: 0; width: 3px; background: var(--route); }
+.stop-line li:first-child::after { top: 50%; }
+.stop-line li:last-child::after { bottom: 50%; }
+.stop-line li:first-child, .stop-line li:last-child { font-weight: 700; }
+.taxi-calc { padding: 18px; margin-bottom: 16px; }
+.taxi-calc h2 { display: flex; align-items: center; gap: 8px; font-size: 17px; margin-bottom: 12px; }
+.taxi-calc-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+.taxi-calc-row label { display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.taxi-km { display: grid; padding: 6px 4px; }
+.taxi-km strong { font: 800 20px var(--font-display); }
+.taxi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.taxi-card { padding: 18px; display: grid; gap: 10px; }
+.taxi-card.closed { opacity: .6; }
+.taxi-card-head { display: flex; align-items: center; gap: 10px; }
+.taxi-card-head > div { flex: 1; }
+.taxi-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--primary-soft); color: var(--accent-ink); }
+.taxi-price { font: 800 28px var(--font-display); }
+.taxi-price small { font-size: 14px; color: var(--muted); }
+.taxi-tariff { color: var(--muted); }
+.taxi-features { display: flex; flex-wrap: wrap; gap: 6px; }
+.taxi-call { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 999px; background: var(--primary); color: var(--on-accent); font-weight: 600; }
+.taxi-call.disabled { background: var(--surface-3); color: var(--muted); pointer-events: none; }
+@media (max-width: 860px) {
+  .transport-layout { grid-template-columns: 1fr; }
+  .taxi-calc-row { grid-template-columns: 1fr 1fr; }
+  .taxi-km { grid-column: 1 / -1; display: flex; gap: 8px; align-items: baseline; }
+  .route-map { height: 260px; }
+}
+/* Ноутбуки: в верхнем меню не хватает места — служебные кнопки справа только с иконкой (текст остаётся для скринридеров). */
+@media (min-width: 1001px) and (max-width: 1500px) {
+  .sidebar-bottom > button { font-size: 0; gap: 0; padding: 9px; }
+  .sidebar-bottom > button small, .sidebar-bottom > button .demo-tag { display: none; }
+  .sidebar-bottom > button svg { width: 19px; height: 19px; }
+}
+.sidebar nav { mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }

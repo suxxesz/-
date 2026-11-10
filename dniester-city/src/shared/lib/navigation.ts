@@ -7,6 +7,7 @@ export const views = [
   'complaints',
   'schedule',
   'contacts',
+  'transport',
   'settings',
   'admin',
   'pitch',
