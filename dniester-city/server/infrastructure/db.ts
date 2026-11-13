@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, Prisma } from './generated/prisma/client';
+import { PrismaClient, Prisma } from '../generated/prisma/client';
 
 export { Prisma, PrismaClient };
 /** Клиент или транзакция — всё, через что сервер ходит в базу. */

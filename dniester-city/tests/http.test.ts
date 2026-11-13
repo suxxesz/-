@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac, randomUUID } from 'node:crypto';
-import { createApp } from '../server/app';
+import { buildApp } from '../server/http/app';
 import { testDb } from './helpers/db';
 import { demoAddress } from '../src/entities/city/model/demo';
 const bot = 'integration-test-token';
@@ -25,10 +25,14 @@ function signedUser(id: number) {
 test('HTTP login, role revocation, idempotent mutation, draft isolation and publication preview', async () => {
   const { pg, prisma, close } = await testDb();
   const query = (sql: string, p?: unknown[]) => pg.query<any>(sql, p);
-  const app = createApp({ prisma, sessionSecret: 't'.repeat(64), botToken: bot, adminIds: ['1'] }),
-    server = app.listen(0, '127.0.0.1');
-  await new Promise<void>((r) => server.once('listening', r));
-  const port = (server.address() as { port: number }).port,
+  const app = await buildApp({
+    prisma,
+    sessionSecret: 't'.repeat(64),
+    botToken: bot,
+    adminIds: ['1'],
+  });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const port = (app.server.address() as { port: number }).port,
     base = `http://127.0.0.1:${port}/api`;
   const call = async (path: string, token = '', body?: unknown) => {
     const r = await fetch(base + path, {
@@ -161,27 +165,43 @@ test('HTTP login, role revocation, idempotent mutation, draft isolation and publ
       ).status,
       400,
     );
+    const put = (body: unknown) =>
+      fetch(base + '/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resident.token}` },
+        body: JSON.stringify(body),
+      });
+    assert.equal((await call('/profile', resident.token)).data.displayName, 'Тест');
+    assert.equal((await put({ displayName: 'Анна', birthDate: '2020-01-01' })).status, 400);
+    const saved = await put({
+      displayName: 'Анна',
+      birthDate: '1990-05-04',
+      city: 'Бендеры',
+      phone: '+373 777 12 345',
+    });
+    assert.equal(saved.status, 200);
+    assert.equal((await saved.json()).phone, '+37377712345');
+    assert.equal((await call('/profile', resident.token)).data.city, 'Бендеры');
   } finally {
-    await new Promise<void>((r, j) => server.close((e) => (e ? j(e) : r())));
+    await app.close();
     await close();
   }
 });
 test('Telegram webhook accepts only the configured secret', async () => {
   const { prisma, close } = await testDb();
   const seen: number[] = [];
-  const app = createApp({
+  const app = await buildApp({
       prisma,
       sessionSecret: 't'.repeat(64),
       botToken: bot,
       adminIds: [],
       telegramWebhook: {
         secret: 'hook-secret',
-        onUpdate: async (u) => void seen.push(u.update_id),
+        onUpdate: async (u) => void seen.push((u as { update_id: number }).update_id),
       },
-    }),
-    server = app.listen(0, '127.0.0.1');
-  await new Promise<void>((r) => server.once('listening', r));
-  const url = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/telegram/webhook`;
+    });
+  await app.listen({ port: 0, host: '127.0.0.1' });
+  const url = `http://127.0.0.1:${(app.server.address() as { port: number }).port}/api/telegram/webhook`;
   const post = (secret: string) =>
     fetch(url, {
       method: 'POST',
@@ -194,7 +214,7 @@ test('Telegram webhook accepts only the configured secret', async () => {
     await new Promise((r) => setTimeout(r, 50));
     assert.deepEqual(seen, [7]);
   } finally {
-    await new Promise<void>((r, j) => server.close((e) => (e ? j(e) : r())));
+    await app.close();
     await close();
   }
 });

@@ -1,9 +1,10 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { telegramUser, type TelegramUser } from '../schemas/auth.schema';
 export function verifyTelegram(
   initData: string,
   botToken: string,
   now = Date.now(),
-): { id: number; first_name?: string } {
+): TelegramUser {
   if (!botToken) throw Error('Telegram-бот не настроен.');
   const params = new URLSearchParams(initData),
     hash = params.get('hash');
@@ -22,10 +23,15 @@ export function verifyTelegram(
   const auth = Number(params.get('auth_date'));
   if (!auth || now / 1000 - auth > 3600 || auth > now / 1000 + 30)
     throw Error('Сессия Telegram устарела. Откройте приложение заново.');
-  const user = JSON.parse(params.get('user') || 'null');
-  if (!user || !Number.isSafeInteger(user.id) || user.id <= 0)
-    throw Error('Неизвестный пользователь Telegram.');
-  return user;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(params.get('user') || 'null');
+  } catch {
+    raw = null;
+  }
+  const user = telegramUser.safeParse(raw);
+  if (!user.success) throw Error('Неизвестный пользователь Telegram.');
+  return user.data;
 }
 export function signSession(userId: string, secret: string, now = Date.now()) {
   const payload = Buffer.from(

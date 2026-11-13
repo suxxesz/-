@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { createPrisma } from './db';
+import { createPrisma } from './infrastructure/db';
 import { services } from '../src/entities/city/model/types';
 // Local operator CLI. It is deliberately not exposed as a public API.
 const path = process.argv[2];

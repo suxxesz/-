@@ -1,18 +1,19 @@
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from './db';
-import { TelegramError } from './telegram';
+import { TelegramError } from 'telegraf';
+import type { PrismaClient } from '../infrastructure/db';
 type Job = { id: bigint; telegram_id: string; text: string; attempts: number; lease_token: string };
 export function retryDecision(
   error: unknown,
   attempts: number,
 ): { status: 'pending' | 'failed'; seconds: number } {
+  // 400/401/403 — бот заблокирован или чат удалён: повтор не поможет.
   if (error instanceof TelegramError && [400, 401, 403].includes(error.code))
     return { status: 'failed', seconds: 0 };
   if (attempts >= 8) return { status: 'failed', seconds: 0 };
   return {
     status: 'pending',
     seconds: Math.max(
-      error instanceof TelegramError ? error.retryAfter : 0,
+      error instanceof TelegramError ? Number(error.parameters?.retry_after) || 0 : 0,
       Math.min(15 * 2 ** Math.max(0, attempts - 1), 900),
     ),
   };
@@ -50,4 +51,22 @@ export async function deliverOne(
     await prisma.$executeRaw`UPDATE notification_outbox SET status=${retry.status},next_attempt_at=now()+${retry.seconds}::integer*interval '1 second',lease_token=NULL WHERE id=${job.id} AND lease_token=${job.lease_token}::uuid`;
   }
   return true;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Бесконечная доставка очереди уведомлений, пока `running()` возвращает true. */
+export async function runOutbox(
+  prisma: PrismaClient,
+  send: (chatId: string, text: string) => Promise<unknown>,
+  running: () => boolean,
+) {
+  while (running()) {
+    try {
+      await sleep((await deliverOne(prisma, send)) ? 300 : 1500);
+    } catch {
+      console.error('Очередь временно недоступна. Повтор через 5 секунд.');
+      await sleep(5000);
+    }
+  }
 }

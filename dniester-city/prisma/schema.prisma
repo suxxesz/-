@@ -33,6 +33,8 @@ model User {
   role            String              @default("resident")
   organization_id String?
   prefs           Json
+  /// Профиль жителя; формат — profileSchema (zod)
+  profile         Json                @default("{}")
   created_at      DateTime            @default(now()) @db.Timestamptz(6)
   organization    Organization?       @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   records         Record[]

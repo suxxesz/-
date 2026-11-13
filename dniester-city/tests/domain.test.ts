@@ -4,8 +4,10 @@ import { createHmac } from 'node:crypto';
 import { applyAction } from '../src/entities/city/model/actions';
 import { validateReading } from '../src/entities/city/model/types';
 import { createDemoState as initialState, demoAddress } from '../src/entities/city/model/demo';
-import { verifyTelegram, signSession, readSession } from '../server/auth';
-import { canManage, type User, type Organization } from '../server/store';
+import { verifyTelegram, signSession, readSession } from '../server/services/session.service';
+import { canManage } from '../server/services/access.policy';
+import type { User } from '../server/repositories/user.repository';
+import type { Organization } from '../src/entities/city/model/types';
 test('meter input rejects duplicates, decreases, non-meter services and old periods', () => {
   const s = initialState();
   assert.match(validateReading(s, demoAddress, 'water', 190, '2026-09')!, /уже/);

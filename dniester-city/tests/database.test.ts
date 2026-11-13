@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stateFor, mutate, emptyPrefs, toUser } from '../server/store';
+import { stateFor } from '../server/services/state.service';
+import { mutate } from '../server/services/mutation.service';
+import { emptyPrefs, toUser } from '../server/repositories/user.repository';
 import { testDb } from './helpers/db';
 import { demoAddress } from '../src/entities/city/model/demo';
 test('PostgreSQL schema, organization isolation, personal readings and addressed outbox', async () => {

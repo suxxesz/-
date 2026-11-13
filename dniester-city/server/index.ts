@@ -1,63 +1,59 @@
-import 'dotenv/config';
 import { createHash } from 'node:crypto';
-import { createPrisma } from './db';
-import { createApp } from './app';
-import { createTelegramClient } from './telegram';
-import { handleUpdate, runOutbox } from './bot-core';
-if (!process.env.DATABASE_URL) throw Error('Укажите DATABASE_URL.');
-const prisma = createPrisma();
+import type { Update } from 'telegraf/types';
+import { loadEnv } from './config/env';
+import { createPrisma } from './infrastructure/db';
+import { buildApp } from './http/app';
+import { botSender, createBot } from './bot/bot';
+import { runOutbox } from './bot/outbox.worker';
+
+// Корень композиции API: читает окружение, собирает зависимости и запускает сервер.
+const env = loadEnv();
+const prisma = createPrisma(env.DATABASE_URL);
 let running = true;
 
 // BOT_MODE=webhook — бот живёт внутри API (бесплатный Render без фоновых воркеров).
 // По умолчанию бот — отдельный процесс `npm run bot` (long polling).
-const token = process.env.BOT_TOKEN || '',
-  miniApp = process.env.MINI_APP_URL || '',
-  publicUrl = (process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/$/, ''),
-  webhook =
-    process.env.BOT_MODE === 'webhook' &&
-    token &&
-    miniApp.startsWith('https://') &&
-    publicUrl.startsWith('https://');
-const telegram = webhook ? createTelegramClient(token) : undefined;
+const publicUrl = (env.PUBLIC_URL || env.RENDER_EXTERNAL_URL).replace(/\/$/, '');
+const webhook =
+  env.BOT_MODE === 'webhook' &&
+  env.BOT_TOKEN &&
+  env.MINI_APP_URL.startsWith('https://') &&
+  publicUrl.startsWith('https://');
+const bot = webhook ? createBot(env.BOT_TOKEN, env.MINI_APP_URL) : undefined;
 // Секрет webhook выводится из токена: стабилен между перезапусками и не хранится отдельно.
-const secret = createHash('sha256').update(`webhook:${token}`).digest('hex');
+const secret = createHash('sha256').update(`webhook:${env.BOT_TOKEN}`).digest('hex');
 
-const app = createApp({
+const app = await buildApp({
   prisma,
-  sessionSecret: process.env.SESSION_SECRET || '',
-  botToken: token,
-  adminIds: (process.env.ADMIN_TELEGRAM_IDS || '').split(',').map((x) => x.trim()),
-  staticDirectory: 'dist',
-  integrationKey: process.env.INTEGRATION_API_KEY || '',
-  telegramWebhook: telegram
-    ? { secret, onUpdate: (u) => handleUpdate(telegram, u, miniApp) }
+  sessionSecret: env.SESSION_SECRET,
+  botToken: env.BOT_TOKEN,
+  adminIds: env.ADMIN_TELEGRAM_IDS,
+  staticDirectory: env.STATIC_DIR,
+  integrationKey: env.INTEGRATION_API_KEY,
+  logger: env.NODE_ENV === 'production',
+  telegramWebhook: bot
+    ? { secret, onUpdate: (u) => bot.handleUpdate(u as Update) }
     : undefined,
 });
-const port = Number(process.env.PORT || 3001),
-  host = process.env.HOST || '127.0.0.1',
-  server = app.listen(port, host, () => console.log(`DniesterCity API: http://${host}:${port}`));
+await app.listen({ port: env.PORT, host: env.HOST });
+console.log(`DniesterCity API: http://${env.HOST}:${env.PORT}`);
 
-if (telegram) {
-  telegram('setWebhook', {
-    url: `${publicUrl}/api/telegram/webhook`,
-    secret_token: secret,
-    allowed_updates: ['message'],
-    drop_pending_updates: false,
-  })
-    .then(() =>
-      console.log('Бот: webhook установлен, очередь уведомлений работает в этом процессе.'),
-    )
-    .catch(() =>
-      console.error('Бот: не удалось установить webhook — проверьте BOT_TOKEN и PUBLIC_URL.'),
-    );
-  void runOutbox(prisma, telegram, () => running);
+if (bot) {
+  bot.telegram
+    .setWebhook(`${publicUrl}/api/telegram/webhook`, {
+      secret_token: secret,
+      allowed_updates: ['message'],
+    })
+    .then(() => console.log('Бот: webhook установлен, очередь уведомлений работает в этом процессе.'))
+    .catch(() => console.error('Бот: не удалось установить webhook — проверьте BOT_TOKEN и PUBLIC_URL.'));
+  void runOutbox(prisma, botSender(bot), () => running);
 }
 
-function shutdown() {
+async function shutdown() {
   running = false;
-  server.close(() => {
-    prisma.$disconnect().finally(() => process.exit(0));
-  });
+  await app.close();
+  await prisma.$disconnect();
+  process.exit(0);
 }
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
