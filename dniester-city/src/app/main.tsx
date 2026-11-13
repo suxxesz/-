@@ -11,14 +11,14 @@ import '@fontsource/montserrat/cyrillic-700.css';
 import '@fontsource/montserrat/cyrillic-800.css';
 import '@fontsource/montserrat/latin-700.css';
 import '@fontsource/montserrat/latin-800.css';
-import '@/app/styles/style.css';
-import '@/app/styles/dw.css';
-import '@/app/styles/map.css';
+import '@/app/styles/main.scss';
 import { CityProvider } from '@/entities/city/model/store';
 import App from '@/app/App';
 import ErrorBoundary from '@/shared/ui/ErrorBoundary';
 import { applyTheme } from '@/shared/lib/theme';
+import { applyLayout } from '@/shared/lib/layout';
 applyTheme();
+applyLayout();
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MotionConfig reducedMotion="user">

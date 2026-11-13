@@ -1,0 +1,128 @@
+// Миксины DniesterCity: брейкпоинты, фокус, скроллбары, карточки.
+// Подключаются в каждый партиал: @use 'mixins' as *;
+@use 'sass:map';
+
+$breakpoints: (
+  xs: 380px,
+  sm: 640px,
+  md: 700px,
+  tablet: 860px,
+  lg: 1000px,
+  xl: 1250px,
+  xxl: 1500px,
+  wide: 1550px,
+);
+
+@function bp($name) {
+  @return map.get($breakpoints, $name);
+}
+
+/// Экран не шире брейкпоинта (мобильная адаптация «сверху вниз»).
+@mixin down($name) {
+  @media (max-width: bp($name)) {
+    @content;
+  }
+}
+/// Экран шире брейкпоинта.
+@mixin up($name) {
+  @media (min-width: bp($name) + 1px) {
+    @content;
+  }
+}
+@mixin between($from, $to) {
+  @media (min-width: bp($from) + 1px) and (max-width: bp($to)) {
+    @content;
+  }
+}
+@mixin short-screen {
+  @media (max-height: 850px) and (min-width: 701px) {
+    @content;
+  }
+}
+@mixin hover {
+  @media (hover: hover) {
+    @content;
+  }
+}
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+/// Кольцо фокуса: двойной контур (фон + акцент) и мягкое свечение — видно на любой подложке.
+@mixin focus-ring($radius: null, $inset: false) {
+  outline: none;
+  @if $radius {
+    border-radius: $radius;
+  }
+  @if $inset {
+    box-shadow:
+      inset 0 0 0 2px var(--primary),
+      inset 0 0 0 4px var(--surface),
+      0 0 0 6px var(--focus-glow);
+  } @else {
+    box-shadow:
+      0 0 0 2px var(--surface),
+      0 0 0 4px var(--primary),
+      0 0 0 9px var(--focus-glow);
+  }
+}
+
+/// Тонкий скроллбар без собственного фона — подложку видно насквозь.
+@mixin thin-scrollbar($size: 8px) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+  &::-webkit-scrollbar {
+    width: $size;
+    height: $size;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track,
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--scroll-thumb-hover);
+    background-clip: padding-box;
+  }
+}
+
+/// Горизонтальная лента со скроллом: края растворяются маской, а не тёмной заливкой.
+@mixin scroll-strip($fade: 28px) {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  background: transparent;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 $fade,
+    #000 calc(100% - #{$fade}),
+    transparent 100%
+  );
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@mixin card($radius: var(--radius-card)) {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: $radius;
+  box-shadow: var(--shadow);
+}
+
+@mixin flex-center($gap: 0) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $gap;
+}

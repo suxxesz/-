@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { useState } from 'react';
 import { Plus, Search, ArrowUpRight } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
@@ -29,6 +30,14 @@ export default function Tickets() {
           Новая заявка
         </button>
       </PageHeading>
+      <Hint title="Как работает заявка">
+        Заявка уходит в службу, которая обслуживает ваш адрес. Каждый ответ и смена статуса сохраняются в истории и приходят в Telegram.
+        <ol className="simple-only">
+          <li>Нажмите «Новая заявка», выберите услугу и опишите проблему.</li>
+          <li>Ждите статус «Принята» — значит, служба её увидела.</li>
+          <li>Если проблема вернулась — заявку можно открыть повторно.</li>
+        </ol>
+      </Hint>
       <InfoStrip>
         Здесь сохраняются обращения и ответы диспетчера. Официальное принятие организацией
         отображается только после её подтверждения; обычная заявка не является вызовом аварийной

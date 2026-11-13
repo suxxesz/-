@@ -107,7 +107,7 @@ test('accessibility on overview and meter dialog', async ({ page }) => {
   // axe мерит контраст в моменте — без анимации появления карточки не попадают в полупрозрачный кадр.
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Ваш дом. Всё под контролем.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /Меньше забот/ })).toBeVisible();
   const overview = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(
     overview.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })),

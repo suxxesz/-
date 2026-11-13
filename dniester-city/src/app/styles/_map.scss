@@ -1,3 +1,4 @@
+@use 'mixins' as *;
 /* Карты: пины, подсказки и кнопки Leaflet на токенах темы. */
 .map {
   border: 1px solid var(--line);

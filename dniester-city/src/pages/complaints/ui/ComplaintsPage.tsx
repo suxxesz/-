@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { lazy, Suspense, useState } from 'react';
 import { useCity } from '@/entities/city/model/store';
 import { PageHeading, InfoStrip, Empty, Pill } from '@/shared/ui/ui';
@@ -74,6 +75,14 @@ export default function Complaints() {
         title="Книга жалоб"
         subtitle="ЖКХ, дороги и благоустройство: фото, точка на карте и открытый статус."
       />
+      <Hint title="Как работает книга жалоб">
+        Жалоба видна всем жителям — так проблему сложнее «потерять». Статус меняет ответственная служба, решение подтверждается фотоотчётом.
+        <ol className="simple-only">
+          <li>Нажмите «Новая жалоба» и коротко опишите, что не так.</li>
+          <li>Приложите фото и поставьте точку на карте — так службе проще найти место.</li>
+          <li>Следите за статусом: «Принята» → «В работе» → «Решена» с фото.</li>
+        </ol>
+      </Hint>
       <InfoStrip>
         Обязательны фото или видео и точка на карте ПМР (или адрес). Это не вызов аварийной службы.
       </InfoStrip>

@@ -1,0 +1,427 @@
+@use 'mixins' as *;
+
+/* ───────── На всю ширину экрана, как в DniesterWorks ───────── */
+main {
+  max-width: none;
+  width: 100%;
+  padding: 28px var(--page-pad) 0;
+}
+:root[data-width='comfort'] main {
+  max-width: 1320px;
+}
+@include up(lg) {
+  .sidebar,
+  .topbar {
+    padding-inline: var(--page-pad);
+  }
+}
+
+/* ───────── Плотность ───────── */
+:root[data-density='compact'] {
+  --gap: 12px;
+  .panel,
+  .page-heading {
+    padding: 16px 18px;
+  }
+  main {
+    padding-top: 18px;
+  }
+}
+:root[data-density='spacious'] {
+  --gap: 28px;
+  .panel {
+    padding: 30px;
+  }
+}
+
+/* ───────── Скроллы: тонкие, дорожка прозрачная ───────── */
+html,
+.modal,
+.sheet,
+.dc-select-list,
+.panel,
+textarea {
+  @include thin-scrollbar;
+}
+html {
+  scroll-behavior: smooth;
+  @include reduced-motion {
+    scroll-behavior: auto;
+  }
+}
+@include up(lg) {
+  // Верхнее меню прокручивается вбок без тёмной подложки — края растворяются маской.
+  .sidebar nav {
+    @include scroll-strip;
+    padding: 6px 4px;
+    button {
+      scroll-snap-align: start;
+    }
+  }
+}
+.chips {
+  @include scroll-strip(18px);
+}
+
+/* ───────── Фокус и табуляция — заметно и красиво на всех элементах ───────── */
+:focus {
+  outline: none;
+}
+a,
+button,
+input,
+select,
+textarea,
+summary,
+[tabindex],
+.dc-select-trigger {
+  transition:
+    box-shadow 0.18s ease,
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.12s;
+  &:focus-visible {
+    @include focus-ring;
+    position: relative;
+    z-index: 2;
+  }
+}
+.sidebar nav button:focus-visible,
+.bottom-nav button:focus-visible,
+.chip:focus-visible,
+input[type='checkbox']:focus-visible,
+input[type='radio']:focus-visible {
+  @include focus-ring(999px);
+}
+main:focus-visible,
+h1:focus-visible {
+  box-shadow: none;
+}
+
+/* ───────── Формы ───────── */
+label,
+.field {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+}
+.panel > label + label {
+  margin-top: 14px;
+}
+.form-grid {
+  display: grid;
+  gap: 16px 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @include down(sm) {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+.dc-select-trigger {
+  min-height: 46px;
+  padding: 11px 14px;
+  font: inherit;
+  font-weight: 500;
+  width: 100%;
+  &:hover:not(:disabled) {
+    border-color: var(--line-strong);
+  }
+}
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.field-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.45;
+}
+.field-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger);
+}
+[aria-invalid='true'] {
+  border-color: var(--danger) !important;
+}
+.check-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-2);
+    cursor: pointer;
+    font-weight: 500;
+    &:has(input:checked) {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: var(--accent-ink);
+    }
+  }
+}
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  @include down(sm) {
+    > * {
+      flex: 1;
+    }
+  }
+}
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  button {
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--muted);
+    background: transparent;
+    &[aria-pressed='true'] {
+      background: var(--surface);
+      color: var(--accent-ink);
+      box-shadow: var(--shadow);
+    }
+  }
+}
+.settings-grid {
+  gap: var(--gap);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+}
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  &:last-child {
+    border-bottom: 0;
+  }
+  > div:first-child {
+    display: grid;
+    gap: 3px;
+  }
+  @include down(sm) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ───────── Пояснения и подсказки ───────── */
+.hint {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  margin: 0 0 var(--gap);
+  border-radius: 16px;
+  background: var(--hint-bg);
+  border: 1px dashed color-mix(in srgb, var(--primary) 35%, var(--line));
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+  > svg {
+    flex: none;
+    color: var(--accent-ink);
+    margin-top: 2px;
+  }
+  strong {
+    display: block;
+    margin-bottom: 2px;
+  }
+  p {
+    margin: 0;
+    color: var(--muted);
+  }
+  ol,
+  ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    color: var(--muted);
+  }
+}
+// Обычный режим — коротко; простой — развёрнутые шаги.
+.simple-only {
+  display: none !important;
+}
+:root[data-simple='true'] {
+  .simple-only {
+    display: block !important;
+  }
+  .expert-only {
+    display: none !important;
+  }
+}
+
+/* ───────── Простой режим: крупнее, просторнее, с подсказками ───────── */
+:root[data-simple='true'] {
+  --gap: 26px;
+  body {
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  .hint {
+    font-size: 15.5px;
+    padding: 18px 20px;
+    border-style: solid;
+  }
+  .dc-select-trigger,
+  input:not([type='checkbox']):not([type='radio']) {
+    min-height: 52px;
+    font-size: 16px;
+  }
+  button.primary,
+  button.outline {
+    min-height: 50px;
+    font-size: 15.5px;
+  }
+  label,
+  .field {
+    font-size: 15px;
+  }
+  .field-hint {
+    font-size: 14px;
+  }
+  .sidebar nav button {
+    font-size: 14.5px;
+  }
+}
+
+/* ───────── Смена темы — волна из кнопки ───────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: theme-wave 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes theme-wave {
+  from {
+    clip-path: circle(0 at var(--wave-x, 50%) var(--wave-y, 0%));
+  }
+  to {
+    clip-path: circle(var(--wave-r, 150vmax) at var(--wave-x, 50%) var(--wave-y, 0%));
+  }
+}
+// Без View Transitions — кольцо-волна поверх страницы.
+.theme-wave-fallback {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: wave-ring 0.7s ease-out forwards;
+}
+@keyframes wave-ring {
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* ───────── Профиль ───────── */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  .avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 22px;
+  }
+  > div {
+    flex: 1;
+    display: grid;
+    gap: 6px;
+  }
+}
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+  span {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    border-radius: inherit;
+    transition: width 0.4s;
+  }
+}
+
+/* Анимации «Минимум» из настроек макета */
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Заголовок страницы получает фокус программно — рамку не рисуем. */
+h1[tabindex='-1']:focus,
+h1[tabindex='-1']:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ряды настроек: подпись сверху, переключатели снизу — не сжимаются в столбик. */
+.setting-row:has(.segmented) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.setting-row input[type='checkbox'] {
+  flex: none;
+}
+.field .segmented,
+label .segmented {
+  justify-self: start;
+}
+
+/* Разделы длинной формы */
+form.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 30px 0 16px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  &:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  flex: none;
+  min-height: 36px;
+}

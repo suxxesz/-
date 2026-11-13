@@ -1,0 +1,17 @@
+// Точка входа стилей. Порядок важен: токены → база → слой DniesterWorks → карта → интерфейс.
+@use 'tokens';
+@use 'city-art';
+@use 'base';
+@use 'dw';
+@use 'map';
+@use 'ui';
+
+/* Фокус и скроллбары — от акцента, поэтому меняются вместе с темой. */
+:root {
+  --focus-glow: color-mix(in srgb, var(--primary) 28%, transparent);
+  --scroll-thumb: color-mix(in srgb, var(--ink) 22%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--primary) 60%, transparent);
+  --page-pad: clamp(16px, 3vw, 48px);
+  --gap: 20px;
+  --hint-bg: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}

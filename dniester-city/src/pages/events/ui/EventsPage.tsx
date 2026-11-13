@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Search, Map as MapIcon, List } from 'lucide-react';
 import { services } from '@/entities/city/model/types';
@@ -35,6 +36,14 @@ export default function Events() {
         title="Отключения и работы"
         subtitle="Что происходит по вашему адресу и когда ожидается восстановление."
       />
+      <Hint title="Что здесь показано">
+        Плановые и аварийные отключения по вашему текущему адресу. Уведомления о новых событиях приходят в Telegram.
+        <ol className="simple-only">
+          <li>Сверху — то, что идёт сейчас, ниже — запланированное.</li>
+          <li>Фильтры по услугам помогают найти только воду, свет или газ.</li>
+          <li>Настроить, о чём присылать уведомления, можно в «Настройках».</li>
+        </ol>
+      </Hint>
       <div className="chips" role="group" aria-label="Направления">
         <button
           className={'chip ' + (filter === 'all' ? 'on' : '')}

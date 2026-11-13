@@ -9,6 +9,7 @@ export const views = [
   'contacts',
   'transport',
   'settings',
+  'profile',
   'admin',
   'pitch',
 ] as const;

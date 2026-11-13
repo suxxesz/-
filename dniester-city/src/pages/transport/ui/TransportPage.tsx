@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bus, CarTaxiFront, Clock, Phone, Route as RouteIcon, Wallet } from 'lucide-react';
@@ -54,6 +55,13 @@ export default function TransportPage() {
         title="Транспорт"
         subtitle="Маршрутки и такси города: когда ближайший рейс, сколько стоит и кому позвонить."
       />
+      <Hint title="Транспорт города">
+        Ближайший рейс считается по времени ПМР. Цена такси — примерная, точную назовёт диспетчер службы.
+        <ol className="simple-only">
+          <li>Выберите маршрут — на карте появится линия и остановки.</li>
+          <li>Для такси нажмите «Позвонить» — номер наберётся сам.</li>
+        </ol>
+      </Hint>
       <InfoStrip>
         Учебные данные: маршруты, интервалы, цены и телефоны условные. В пилоте их публикует
         диспетчер перевозчика.

@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { CalendarDays } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
 import { PageHeading, Pill, Empty } from '@/shared/ui/ui';
@@ -12,6 +13,13 @@ export default function Schedule() {
         title="Графики обслуживания"
         subtitle="Регулярная забота о доме: вывоз отходов, уборка и профилактика."
       />
+      <Hint title="Графики обслуживания">
+        Регулярные работы по дому: вывоз мусора, уборка подъездов, профилактика. Меняются редко, но если меняются — придёт уведомление.
+        <ol className="simple-only">
+          <li>Найдите нужную услугу и день недели.</li>
+          <li>Если работы не было по графику — оставьте заявку.</li>
+        </ol>
+      </Hint>
       <div className="schedule-grid">
         {items.map((s) => (
           <article className="panel schedule-card" key={s.id}>

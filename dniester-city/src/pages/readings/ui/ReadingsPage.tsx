@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { useState } from 'react';
 import { Plus, Download, ArrowRight, TrendingDown, TrendingUp } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
@@ -66,6 +67,14 @@ export default function Readings() {
           Передать показания
         </button>
       </PageHeading>
+      <Hint title="Как передать показания">
+        Выберите счётчик, впишите цифры с табло до запятой и сохраните. Повтор за тот же месяц не примется — это защита от ошибок.
+        <ol className="simple-only">
+          <li>Подойдите к счётчику и перепишите чёрные цифры слева направо.</li>
+          <li>Нажмите «Передать показания» и выберите нужный счётчик.</li>
+          <li>Если число меньше прошлого месяца — проверьте, нет ли опечатки.</li>
+        </ol>
+      </Hint>
       <InfoStrip>
         Показания сохраняются в сервисе. Официальная передача поставщикам ещё не подключена.
       </InfoStrip>

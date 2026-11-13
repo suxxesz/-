@@ -1,3 +1,4 @@
+import { Hint } from '@/shared/ui/Hint';
 import { ExternalLink, ArrowUpRight } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
 import { serviceById } from '@/entities/city/model/types';
@@ -13,6 +14,13 @@ export default function Organizations() {
         title="Коммунальные организации"
         subtitle="Прозрачная зона ответственности и проверяемый источник информации."
       />
+      <Hint title="Кто за что отвечает">
+        У каждой организации своя зона: услуги и адреса. Если работы объявлены, источник указан в карточке события.
+        <ol className="simple-only">
+          <li>Найдите свою службу по услуге — например, «Водоснабжение».</li>
+          <li>Телефоны и сайт — в карточке организации.</li>
+        </ol>
+      </Hint>
       {!serverMode && (
         <InfoStrip>
           Демонстрационный справочник. Реальные контакты и зоны обслуживания добавляются при

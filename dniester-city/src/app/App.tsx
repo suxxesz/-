@@ -15,8 +15,6 @@ import {
   Sun,
   Menu,
   X,
-  ArrowUpRight,
-  Home,
   Presentation,
   LogOut,
   RefreshCw,
@@ -27,7 +25,7 @@ import {
 } from 'lucide-react';
 import { useCity } from '@/entities/city/model/store';
 import Logo from '@/shared/ui/Logo';
-import { applyTheme, currentTheme } from '@/shared/lib/theme';
+import { applyThemeWithWave } from '@/shared/lib/theme';
 import { useView, navigate, type View } from '@/shared/lib/navigation';
 import { serverMode, resetDemo } from '@/entities/city/api/client';
 import ModalHost from '@/widgets/modal-host/ui/ModalHost';
@@ -43,7 +41,8 @@ const Events = lazy(() => import('@/pages/events')),
   SettingsPage = lazy(() => import('@/pages/settings')),
   Dispatcher = lazy(() => import('@/pages/dispatcher')),
   Pitch = lazy(() => import('@/pages/pitch')),
-  Transport = lazy(() => import('@/pages/transport'));
+  Transport = lazy(() => import('@/pages/transport')),
+  Profile = lazy(() => import('@/pages/profile'));
 const nav = [
   ['home', 'Обзор', LayoutDashboard],
   ['events', 'Отключения и работы', Zap],
@@ -84,9 +83,6 @@ export default function App() {
     const change = () => setOnline(navigator.onLine);
     window.addEventListener('online', change);
     window.addEventListener('offline', change);
-    document.documentElement.dataset.large = String(
-      localStorage.getItem('city-large-text') === '1',
-    );
     return () => {
       window.removeEventListener('online', change);
       window.removeEventListener('offline', change);
@@ -119,6 +115,7 @@ export default function App() {
     contacts: <Organizations />,
     transport: <Transport />,
     settings: <SettingsPage />,
+    profile: <Profile />,
     admin: <Dispatcher />,
     pitch: <Pitch />,
   };
@@ -165,20 +162,6 @@ export default function App() {
             </button>
           ))}
         </nav>
-        <div className="sidebar-help">
-          <Home size={23} />
-          <h4>Дом начинается с заботы</h4>
-          <p>Сообщите о проблеме и следите за её решением.</p>
-          <button
-            onClick={() => {
-              setMobile(false);
-              open({ type: 'ticket' });
-            }}
-          >
-            Оставить обращение
-            <ArrowUpRight size={15} />
-          </button>
-        </div>
         <div className="sidebar-bottom">
           <button
             className={view === 'pitch' ? 'selected' : ''}
@@ -207,10 +190,12 @@ export default function App() {
           <button
             className="theme-toggle"
             aria-label="Сменить тему"
-            onClick={() => {
-              applyTheme(
+            title="Сменить тему"
+            onClick={(e) => {
+              applyThemeWithWave(
                 document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark',
-                currentTheme()[1],
+                undefined,
+                e.currentTarget,
               );
               setThemeTick((n) => n + 1);
             }}
@@ -222,7 +207,17 @@ export default function App() {
             )}
           </button>
           <div className="profile">
-            <span className="avatar">{role === 'resident' ? 'Ж' : 'Д'}</span>
+            <button
+              className="avatar"
+              aria-label="Мой профиль"
+              title="Мой профиль"
+              onClick={() => {
+                setMobile(false);
+                navigate('profile');
+              }}
+            >
+              {role === 'resident' ? 'Ж' : 'Д'}
+            </button>
             <div>
               <strong>{role === 'resident' ? 'Житель города' : 'Диспетчер'}</strong>
               <small>{serverMode ? 'Telegram-аккаунт' : 'Учебный кабинет'}</small>
@@ -305,7 +300,6 @@ export default function App() {
               <Bell size={22} />
               {unread > 0 && <i>{unread > 9 ? '9+' : unread}</i>}
             </button>
-            <span className="avatar small">{role === 'resident' ? 'Ж' : 'Д'}</span>
           </div>
         </header>
         {!online && (

@@ -1,3 +1,4 @@
+@use 'mixins' as *;
 /* Слой в стиле DniesterWorks поверх базовой вёрстки: фон со свечением, заголовки Montserrat,
    карточки, поля и кнопки на токенах. Цвета — только из tokens.css. */
 body {
@@ -153,7 +154,7 @@ dialog,
   color: var(--ink);
   border-color: var(--line);
 }
-@media (max-width: 640px) {
+@include down(sm) {
   .page-heading {
     border-radius: 22px;
     padding: 20px 18px;
@@ -285,7 +286,7 @@ dialog,
     box-shadow 0.2s,
     border-color 0.2s;
 }
-@media (hover: hover) {
+@include hover {
   .event-card:hover,
   .ticket-row:hover,
   .quick-action:hover,
@@ -328,7 +329,7 @@ dialog,
 .services-grid > *:nth-child(n + 4) {
   animation-delay: 0.15s;
 }
-@media (max-width: 640px) {
+@include down(sm) {
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
@@ -339,7 +340,7 @@ dialog,
     border-radius: 24px 24px 0 0;
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@include reduced-motion {
   *,
   *::before,
   *::after {
@@ -578,7 +579,7 @@ dialog,
   color: var(--muted);
   pointer-events: none;
 }
-@media (max-width: 860px) {
+@include down(tablet) {
   .transport-layout {
     grid-template-columns: 1fr;
   }
@@ -596,7 +597,7 @@ dialog,
   }
 }
 /* Ноутбуки: в верхнем меню не хватает места — служебные кнопки справа только с иконкой (текст остаётся для скринридеров). */
-@media (min-width: 1001px) and (max-width: 1500px) {
+@include between(lg, xxl) {
   .sidebar-bottom > button {
     font-size: 0;
     gap: 0;

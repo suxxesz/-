@@ -1,5 +1,4 @@
-@import './tokens.css';
-@import './city-art.css';
+@use 'mixins' as *;
 :root {
   font-family: var(--font-sans);
   font-synthesis: none;
@@ -504,7 +503,7 @@ main {
   background: #6e87b0;
   border-radius: 50%;
 }
-.hero h2 {
+.hero h1 {
   font-size: 30px;
   line-height: 1.35;
   letter-spacing: -1px;
@@ -1289,7 +1288,8 @@ tbody tr:last-child td {
   align-items: center;
   gap: 10px;
 }
-.toggle-row input {
+.toggle-row input,
+.setting-row input[type="checkbox"] {
   appearance: none;
   width: 35px;
   height: 22px;
@@ -1299,7 +1299,8 @@ tbody tr:last-child td {
   flex-shrink: 0;
   cursor: pointer;
 }
-.toggle-row input:before {
+.toggle-row input:before,
+.setting-row input[type="checkbox"]:before {
   content: '';
   position: absolute;
   width: 16px;
@@ -1311,10 +1312,12 @@ tbody tr:last-child td {
   box-shadow: 0 2px 3px #2c497815;
   transition: left 0.15s;
 }
-.toggle-row input:checked {
-  background: #5b77a3;
+.toggle-row input:checked,
+.setting-row input[type="checkbox"]:checked {
+  background: var(--primary);
 }
-.toggle-row input:checked:before {
+.toggle-row input:checked:before,
+.setting-row input[type="checkbox"]:checked:before {
   left: 16px;
 }
 .danger {
@@ -2003,7 +2006,7 @@ html[data-large='true'] .pill,
 html[data-large='true'] .muted {
   font-size: 12px;
 }
-@media (min-width: 1550px) {
+@include up(wide) {
   main {
     padding: 42px 48px 0;
   }
@@ -2016,7 +2019,7 @@ html[data-large='true'] .muted {
   .hero-copy {
     padding: 35px 40px;
   }
-  .hero h2 {
+  .hero h1 {
     font-size: 34px;
   }
   .hero p {
@@ -2048,7 +2051,7 @@ html[data-large='true'] .muted {
     font-size: 13px;
   }
 }
-@media (max-height: 850px) and (min-width: 701px) {
+@include short-screen {
   .sidebar {
     padding-top: 23px;
   }
@@ -2078,7 +2081,7 @@ html[data-large='true'] .muted {
     padding: 9px 12px;
   }
 }
-@media (max-width: 1250px) {
+@include down(xl) {
   :root {
     --sidebar: 225px;
   }
@@ -2116,7 +2119,7 @@ html[data-large='true'] .muted {
   .hero-copy {
     padding: 28px;
   }
-  .hero h2 {
+  .hero h1 {
     font-size: 28px;
   }
   .city-art {
@@ -2187,7 +2190,7 @@ html[data-large='true'] .muted {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 1000px) {
+@include down(lg) {
   :root {
     --sidebar: 210px;
   }
@@ -2224,7 +2227,7 @@ html[data-large='true'] .muted {
   .hero {
     height: 270px;
   }
-  .hero h2 {
+  .hero h1 {
     font-size: 27px;
   }
   .hero-copy {
@@ -2332,7 +2335,7 @@ html[data-large='true'] .muted {
     font-size: 27px;
   }
 }
-@media (max-width: 700px) {
+@include down(md) {
   :root {
     --sidebar: 250px;
   }
@@ -2498,7 +2501,7 @@ html[data-large='true'] .muted {
     font-size: 6.5px;
     letter-spacing: 0.6px;
   }
-  .hero h2 {
+  .hero h1 {
     font-size: 27px;
     letter-spacing: -0.9px;
     line-height: 1.35;
@@ -3040,7 +3043,7 @@ html[data-large='true'] .muted {
     margin-bottom: 13px;
   }
 }
-@media (max-width: 380px) {
+@include down(xs) {
   .topbar {
     padding: 0 14px;
   }
@@ -3052,7 +3055,7 @@ html[data-large='true'] .muted {
     font-size: 6px;
     padding: 5px 4px;
   }
-  .hero h2 {
+  .hero h1 {
     font-size: 24px;
   }
   .page-heading h1 {
@@ -3087,7 +3090,7 @@ html[data-large='true'] .muted {
     font-size: 9px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@include reduced-motion {
   * {
     transition: none !important;
     scroll-behavior: auto !important;
@@ -3230,7 +3233,7 @@ th {
 .page-heading h1:focus {
   outline: 0;
 }
-@media (max-width: 700px) {
+@include down(md) {
   .sidebar {
     visibility: hidden;
   }
@@ -3267,7 +3270,7 @@ button.primary {
 }
 
 /* Раскладка по референсу: верхняя панель, чипы направлений, мягкие карточки */
-@media (min-width: 1001px) {
+@include up(lg) {
   .app {
     display: block;
   }

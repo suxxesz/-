@@ -10,7 +10,7 @@ test('resident submits reading and ticket, dispatcher processes request, data pe
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await expect(page.getByRole('heading', { name: 'Ваш дом. Всё под контролем.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /Меньше забот/ })).toBeVisible();
   await page.getByRole('button', { name: 'Передать показания Вода, свет и газ' }).click();
   let dialog = page.getByRole('dialog');
   await choose(dialog, { name: 'category' }, 'water');
@@ -50,7 +50,7 @@ test('resident submits reading and ticket, dispatcher processes request, data pe
 });
 test('mobile layout, addresses and organization information', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole('heading', { name: 'Ваш дом. Всё под контролем.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /Меньше забот/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.screenshot({ path: '.local/mobile.png', fullPage: true });
   await page.getByRole('button', { name: 'Открыть меню' }).click();

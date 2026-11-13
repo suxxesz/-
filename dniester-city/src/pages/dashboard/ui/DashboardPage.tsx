@@ -12,7 +12,8 @@ import {
 import { services } from '@/entities/city/model/types';
 import { useCity } from '@/entities/city/model/store';
 import { navigate } from '@/shared/lib/navigation';
-import { PageHeading, SectionHeading, ArrowLink, Empty } from '@/shared/ui/ui';
+import { Hint } from '@/shared/ui/Hint';
+import { SectionHeading, ArrowLink, Empty } from '@/shared/ui/ui';
 import { ServiceIcon, EventCard, StatusPill } from '@/entities/city/ui';
 import { dateText } from '@/shared/lib/dates';
 export default function Dashboard() {
@@ -26,26 +27,17 @@ export default function Dashboard() {
     openTickets = tickets.filter((t) => !['Выполнена', 'Закрыта'].includes(t.status));
   return (
     <>
-      <PageHeading
-        title="Ваш дом. Всё под контролем."
-        subtitle="Коммунальные вопросы решаются здесь — спокойно и по порядку."
-      >
-        <button className="outline" onClick={() => open({ type: 'address' })}>
-          <Plus size={18} />
-          Добавить адрес
-        </button>
-      </PageHeading>
       <section className="hero">
         <div className="hero-copy">
           <span className="hero-label">
             <span />
             Единое окно коммунальных услуг
           </span>
-          <h2>
+          <h1 tabIndex={-1}>
             Меньше забот.
             <br />
             Больше домашнего тепла.
-          </h2>
+          </h1>
           <p>
             Знайте о работах заранее, передавайте показания
             <br className="desktop-only" /> и следите за решением вопросов вашего дома.
@@ -90,6 +82,15 @@ export default function Dashboard() {
           </div>
         </div>
       </section>
+      <Hint title="С чего начать">
+        Выберите адрес вверху страницы — и здесь появятся отключения, графики и заявки именно
+        вашего дома.
+        <ol className="simple-only">
+          <li>Нажмите «Мой адрес» вверху и выберите или добавьте дом.</li>
+          <li>Раз в месяц нажимайте «Передать показания» и вписывайте цифры со счётчика.</li>
+          <li>Если что-то сломалось — «Сообщить о проблеме». Ответ придёт в Telegram.</li>
+        </ol>
+      </Hint>
       <div className="quick-actions">
         <button onClick={() => open({ type: 'reading' })}>
           <span className="quick-icon sage">
@@ -101,13 +102,13 @@ export default function Dashboard() {
           </div>
           <ArrowUpRight size={19} />
         </button>
-        <button onClick={() => open({ type: 'ticket' })}>
+        <button onClick={() => navigate('tickets')}>
           <span className="quick-icon peach">
             <MessageSquare />
           </span>
           <div>
-            <strong>Оставить заявку</strong>
-            <small>С историей и статусом</small>
+            <strong>Мои заявки</strong>
+            <small>Статусы и история ответов</small>
           </div>
           <ArrowUpRight size={19} />
         </button>
